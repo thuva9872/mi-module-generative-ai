@@ -25,6 +25,21 @@
             }
           },
           {
+            "type": "attribute",
+            "value": {
+              "name": "embeddingConfigRef",
+              "displayName": "Embedding model Connection",
+              "inputType": "connection",
+              "allowedConnectionTypes": [
+                "OPEN_AI"
+              ],
+              "defaultType": "connection.local",
+              "defaultValue": "",
+              "required": "true",
+              "helpTip": "AI service connection to be used"
+            }
+          },
+          {
             "type": "attributeGroup",
             "value": {
               "groupName": "Basic",
@@ -38,6 +53,34 @@
                     "defaultValue": "",
                     "required": "true",
                     "helpTip": "An array of JSON objects in the format of {\"text\":\"test\",\"embedding\":\"[array of numbers]\"}"
+                  }
+                },
+                {
+                  "type": "attribute",
+                  "value": {
+                    "name": "needEmbedding",
+                    "displayName": "Embed Input",
+                    "inputType": "checkbox",
+                    "defaultValue": "true",
+                    "required": "true",
+                    "helpTip": "Need to embed the input?"
+                  }
+                },
+                {
+                  "type": "attribute",
+                  "value": {
+                    "name": "model",
+                    "displayName": "Embedding model",
+                    "inputType": "combo",
+                    "comboValues": ["text-embedding-3-small", "text-embedding-3-small", "text-embedding-ada-002"],
+                    "defaultValue": "text-embedding-3-small",
+                    "required": "true",
+                    "helpTip": "Select the splitting strategy",
+                    "enableCondition": [
+                      {
+                        "needEmbedding": true
+                      }
+                    ]
                   }
                 },
                 {

@@ -154,6 +154,26 @@ public abstract class AbstractAIMediator extends AbstractConnector {
         messageContext.setVariable(responseVariable, response);
     }
 
+    public void setResponseVariable(String responseVariable) {
+
+        this.responseVariable = responseVariable;
+    }
+
+    public void setOverwriteBody(Boolean overwriteBody) {
+
+        this.overwriteBody = overwriteBody;
+    }
+
+    public String getResponseVariable() {
+
+        return responseVariable;
+    }
+
+    public Boolean getOverwriteBody() {
+
+        return overwriteBody;
+    }
+
     public void handleConnectorException(Errors code, MessageContext mc, Throwable e) {
         this.log.error(code.getMessage(), e);
 

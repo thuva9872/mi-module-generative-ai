@@ -16,16 +16,16 @@
    specific language governing permissions and limitations
    under the License.
 -->
-<component name="functions" type="synapse/template" >
+<component name="rag" displayName="RAG" type="synapse/template" >
     <subComponents>
-		<component name="agent" >
-			<file>agent.xml</file>
-			<description>LLM Agent</description>
-		</component>
-		<component name="chat" >
-			<file>chat.xml</file>
-			<description>LLM chat</description>
-		</component>
+<!--		<component name="agent" >-->
+<!--			<file>agent.xml</file>-->
+<!--			<description>LLM Agent</description>-->
+<!--		</component>-->
+<!--		<component name="chat" >-->
+<!--			<file>chat.xml</file>-->
+<!--			<description>LLM chat</description>-->
+<!--		</component>-->
 <!--		<component name="prompt">-->
 <!--			<file>prompt.xml</file>-->
 <!--			<description>LLM chat prompt</description>-->
