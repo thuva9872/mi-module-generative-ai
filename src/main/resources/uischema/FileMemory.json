@@ -1,0 +1,47 @@
+{
+  "connectorName": "ai",
+  "connectionName": "MEMORY_FILE",
+  "title": "Memory File Connection Config",
+  "help": "<h1>AI Connector</h1> <b>The File based memory connection.</b>",
+  "elements": [
+    {
+      "type": "attribute",
+      "value": {
+        "name": "connectionName",
+        "displayName": "Connection Name",
+        "inputType": "string",
+        "defaultValue": "MEMORY_FILE_CONNECTION",
+        "required": "true",
+        "helpTip": "The name for the memory connection",
+        "validation": "nameWithoutSpecialCharactors"
+      }
+    },
+    {
+      "type": "attributeGroup",
+      "value": {
+        "groupName": "General",
+        "elements": [
+          {
+            "type": "attributeGroup",
+            "value": {
+              "groupName": "Basic",
+              "elements": [
+                {
+                  "type": "attribute",
+                  "value": {
+                    "name": "filePath",
+                    "displayName": "File Path",
+                    "inputType": "string",
+                    "defaultValue": "",
+                    "required": "true",
+                    "helpTip": "File Path for the Memory"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

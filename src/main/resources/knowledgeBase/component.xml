@@ -16,23 +16,23 @@
    specific language governing permissions and limitations
    under the License.
 -->
-<component name="functions" type="synapse/template" >
+<component name="knowledgeBase" displayName="Knowledge Base (Vector Database)" type="synapse/template" >
     <subComponents>
-		<component name="agent" >
-			<file>agent.xml</file>
-			<description>LLM Agent</description>
-		</component>
-		<component name="chat" >
-			<file>chat.xml</file>
-			<description>LLM chat</description>
-		</component>
+<!--		<component name="agent" >-->
+<!--			<file>agent.xml</file>-->
+<!--			<description>LLM Agent</description>-->
+<!--		</component>-->
+<!--		<component name="chat" >-->
+<!--			<file>chat.xml</file>-->
+<!--			<description>LLM chat</description>-->
+<!--		</component>-->
 <!--		<component name="prompt">-->
 <!--			<file>prompt.xml</file>-->
 <!--			<description>LLM chat prompt</description>-->
 <!--		</component>-->
-		<component name="addToStore" >
-			<file>addToStore.xml</file>
-			<description>LLM chat prompt</description>
+		<component name="addToKnowledge" >
+			<file>addToKnowledge.xml</file>
+			<description>Stores the knowledge to the vector database</description>
 		</component>
 <!--		<component name="parse" >-->
 <!--			<file>parse.xml</file>-->
@@ -46,9 +46,9 @@
 <!--			<file>generateEmbeddings.xml</file>-->
 <!--			<description>Embed document chunks</description>-->
 <!--		</component>-->
-		<component name="searchStore" >
-			<file>searchStore.xml</file>
-			<description>Retrieve documents</description>
+		<component name="getFromKnowledge" >
+			<file>getFromKnowledge.xml</file>
+			<description>Retrieve knowledge from the vector database</description>
 		</component>
     </subComponents>
 </component>

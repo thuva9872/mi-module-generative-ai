@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!--
  	Copyright (c) 2025, WSO2 LLC. (http://www.wso2.org) All Rights Reserved.
 
@@ -16,15 +15,12 @@
    specific language governing permissions and limitations
    under the License.
 -->
-<connector>
-    <component name="ai" package="org.wso2.carbon.esb.module" >
-        <dependency component="config" />
-        <dependency component="chat" />
-        <dependency component="agent" />
-        <dependency component="knowledgeBase" />
-        <!--        <dependency component="functions" />-->
-        <description>WSO2 Low Code AI app builder library</description>
-    </component>
-    <displayName>AI</displayName>
-    <icon>icon/icon-small.png</icon>
-</connector>
+<template xmlns="http://ws.apache.org/ns/synapse" name="addToKnowledge">
+    <parameter name="input" description="Input"/>
+    <parameter name="embeddingConfigRef" description="Embedding configuration reference"/>
+    <parameter name="responseVariable" description="Response variable name"/>
+    <parameter name="overwriteBody" description="Replace the Message Body in Message Context with the response of the operation."/>
+    <sequence>
+        <class name="org.wso2.carbon.esb.module.ai.operations.EmbeddingIngestor"/>
+    </sequence>
+</template>

@@ -32,7 +32,7 @@
     <properties>
         <connector.name>ai</connector.name>
         <integration.base.version>1.0.2</integration.base.version>
-        <synapse.version>4.0.0-wso2v194</synapse.version>
+        <synapse.version>4.0.0-wso2v219-SNAPSHOT</synapse.version>
         <carbon.mediation.version>4.7.183</carbon.mediation.version>
         <langchain4j.version>1.0.0-alpha1</langchain4j.version>
         <postgresql.version>42.7.4</postgresql.version>

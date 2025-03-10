@@ -105,4 +105,5 @@ public class Constants {
     public static final String KNOWLEDGE = "knowledge";
     public static final String HISTORY = "history";
     public static final String MAX_HISTORY = "maxHistory";
+    public static final String MEMORY_ID = "memoryId";
 }

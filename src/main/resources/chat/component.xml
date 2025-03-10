@@ -16,12 +16,12 @@
    specific language governing permissions and limitations
    under the License.
 -->
-<component name="functions" type="synapse/template" >
+<component name="chat" displayName="Chat" type="synapse/template" >
     <subComponents>
-		<component name="agent" >
-			<file>agent.xml</file>
-			<description>LLM Agent</description>
-		</component>
+<!--		<component name="agent" >-->
+<!--			<file>agent.xml</file>-->
+<!--			<description>LLM Agent</description>-->
+<!--		</component>-->
 		<component name="chat" >
 			<file>chat.xml</file>
 			<description>LLM chat</description>
@@ -30,10 +30,10 @@
 <!--			<file>prompt.xml</file>-->
 <!--			<description>LLM chat prompt</description>-->
 <!--		</component>-->
-		<component name="addToStore" >
-			<file>addToStore.xml</file>
-			<description>LLM chat prompt</description>
-		</component>
+<!--		<component name="addToStore" >-->
+<!--			<file>addToKnowledge.xml</file>-->
+<!--			<description>LLM chat prompt</description>-->
+<!--		</component>-->
 <!--		<component name="parse" >-->
 <!--			<file>parse.xml</file>-->
 <!--			<description>Parse Documents</description>-->
@@ -46,9 +46,9 @@
 <!--			<file>generateEmbeddings.xml</file>-->
 <!--			<description>Embed document chunks</description>-->
 <!--		</component>-->
-		<component name="searchStore" >
-			<file>searchStore.xml</file>
-			<description>Retrieve documents</description>
-		</component>
+<!--		<component name="searchStore" >-->
+<!--			<file>getFromKnowledge.xml</file>-->
+<!--			<description>Retrieve documents</description>-->
+<!--		</component>-->
     </subComponents>
 </component>

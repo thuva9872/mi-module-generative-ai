@@ -1,6 +1,6 @@
 {
   "connectorName": "ai",
-  "operationName": "chat",
+  "operationName": "agent",
   "title": "Chat completion",
   "help": "<h1>Chat completion</h1><b>Refer docs for help</b><ul><li><a href=\"https://mi.docs.wso2.com/en/latest/\",>Docs</a></li></ul>",
   "elements": [
@@ -58,24 +58,23 @@
                 {
                   "type": "attribute",
                   "value": {
+                    "name": "system",
+                    "displayName": "System prompt",
+                    "inputType": "textAreaOrExpression",
+                    "defaultValue": "You are a helpful AI agent",
+                    "required": "false",
+                    "helpTip": "Give instructions to LLM"
+                  }
+                },
+                {
+                  "type": "attribute",
+                  "value": {
                     "name": "prompt",
                     "displayName": "User query/prompt",
                     "inputType": "expressionTextArea",
                     "defaultValue": "",
                     "required": "true",
                     "helpTip": "Query the LLM"
-                  }
-                },
-                {
-                  "type": "attribute",
-                  "value": {
-                    "name": "outputType",
-                    "displayName": "Output type",
-                    "inputType": "combo",
-                    "comboValues": ["string", "integer", "float", "boolean"],
-                    "defaultValue": "string",
-                    "required": "true",
-                    "helpTip": "Define type of the output"
                   }
                 }
               ]
@@ -119,12 +118,12 @@
                 {
                   "type": "attribute",
                   "value": {
-                    "name": "system",
-                    "displayName": "System prompt",
-                    "inputType": "textAreaOrExpression",
-                    "defaultValue": "You are a helpful AI agent",
+                    "name": "maxHistory",
+                    "displayName": "Max chat history",
+                    "inputType": "stringOrExpression",
+                    "defaultValue": "10",
                     "required": "false",
-                    "helpTip": "Give instructions to LLM"
+                    "helpTip": "Maximum chat history to use"
                   }
                 },
                 {
@@ -180,47 +179,6 @@
                     "defaultValue": "",
                     "required": "false",
                     "helpTip": "Seed"
-                  }
-                }
-              ]
-            }
-          },
-          {
-            "type": "attributeGroup",
-            "value": {
-              "groupName": "Additional",
-              "elements": [
-                {
-                  "type": "attribute",
-                  "value": {
-                    "name": "knowledge",
-                    "displayName": "Additional knowledge",
-                    "inputType": "stringOrExpression",
-                    "defaultValue": "",
-                    "required": "false",
-                    "helpTip": "Provide external knowledge to LLM"
-                  }
-                },
-                {
-                  "type": "attribute",
-                  "value": {
-                    "name": "history",
-                    "displayName": "Chat history",
-                    "inputType": "stringOrExpression",
-                    "defaultValue": "",
-                    "required": "false",
-                    "helpTip": "Provide chat history in OpenAI format"
-                  }
-                },
-                {
-                  "type": "attribute",
-                  "value": {
-                    "name": "maxHistory",
-                    "displayName": "Max chat history",
-                    "inputType": "stringOrExpression",
-                    "defaultValue": "10",
-                    "required": "false",
-                    "helpTip": "Maximum chat history to use"
                   }
                 }
               ]
