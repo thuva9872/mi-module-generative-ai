@@ -77,6 +77,8 @@
 			<case regex="MI_VECTOR_STORE|CHROMA_DB|PINECONE|POSTGRE_SQL">
 				<class name="org.wso2.carbon.esb.module.ai.connections.VectorStoreConnection" />
 			</case>
+			<case regex="MEMORY_FILE">
+			</case>
 
 			<default>
 				<log level="full">

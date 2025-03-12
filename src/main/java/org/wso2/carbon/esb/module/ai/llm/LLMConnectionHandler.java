@@ -43,6 +43,7 @@ public class LLMConnectionHandler {
             String connectionName, String modelName, Double temperature, Integer maxTokens,
             Double topP, Double frequencyPenalty, Integer seed) {
 
+        //TODO: Need to implement a client (model) pool to handle multiple connections
         ChatLanguageModel chatModel = null;
         ConnectionParams connectionParams = connectionMap.remove(connectionName);
         switch (Objects.requireNonNull(connectionParams).getConnectionType()) {
