@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.esb.module.ai;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import org.apache.axis2.AxisFault;
 import org.apache.synapse.MessageContext;
@@ -129,8 +130,8 @@ public abstract class AbstractAIMediator extends AbstractConnector {
         String jsonString = Utils.toJson(payload);
         if (payload instanceof List) {
             output = JsonParser.parseString(jsonString).getAsJsonArray();
-        } else if (payload instanceof String || payload instanceof Boolean ||
-                        payload instanceof Long || payload instanceof Double) {
+        } else if (payload instanceof String || payload instanceof Boolean || payload instanceof Long ||
+                payload instanceof Double || payload instanceof JsonElement) {
             output = payload;
         } else {
             // Convert Java object to JSON string
@@ -152,6 +153,26 @@ public abstract class AbstractAIMediator extends AbstractConnector {
         response.setHeaders(headers);
         response.setAttributes(attributes);
         messageContext.setVariable(responseVariable, response);
+    }
+
+    public void setResponseVariable(String responseVariable) {
+
+        this.responseVariable = responseVariable;
+    }
+
+    public void setOverwriteBody(Boolean overwriteBody) {
+
+        this.overwriteBody = overwriteBody;
+    }
+
+    public String getResponseVariable() {
+
+        return responseVariable;
+    }
+
+    public Boolean getOverwriteBody() {
+
+        return overwriteBody;
     }
 
     public void handleConnectorException(Errors code, MessageContext mc, Throwable e) {

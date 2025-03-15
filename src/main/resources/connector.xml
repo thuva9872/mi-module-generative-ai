@@ -19,8 +19,12 @@
 <connector>
     <component name="ai" package="org.wso2.carbon.esb.module" >
         <dependency component="config" />
-        <dependency component="functions" />
+        <dependency component="chat"/>
+        <dependency component="agent"/>
+        <dependency component="knowledgeBase"/>
+        <dependency component="functions"/>
         <description>WSO2 Low Code AI app builder library</description>
     </component>
+    <displayName>AI</displayName>
     <icon>icon/icon-small.png</icon>
 </connector>

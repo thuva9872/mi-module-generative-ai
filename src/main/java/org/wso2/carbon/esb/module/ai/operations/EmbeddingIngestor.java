@@ -64,7 +64,8 @@ public class EmbeddingIngestor extends AbstractAIMediator {
         } catch (Exception e) {
             handleConnectorException(Errors.EMBEDDING_INJECTION_ERROR, mc, e);
         } finally {
-            handleConnectorResponse(mc, null, null, Map.of("SUCCESS", "true"));
+            handleConnectorResponse(mc, Map.of("success", true),
+                    null, Map.of("SUCCESS", "true"));
         }
     }
 

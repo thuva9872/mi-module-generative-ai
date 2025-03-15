@@ -1,0 +1,257 @@
+{
+  "connectorName": "ai",
+  "operationName": "addToKnowledge",
+  "title": "Ingest documents to the vector store",
+  "help": "",
+  "elements": [
+    {
+      "type": "attributeGroup",
+      "value": {
+        "groupName": "Connection",
+        "elements": [
+          {
+            "type": "attribute",
+            "value": {
+              "name": "vectorStoreConfigKey",
+              "displayName": "Vector store Connection",
+              "inputType": "connection",
+              "allowedConnectionTypes": [
+                "MI_VECTOR_STORE",
+                "CHROMA_DB",
+                "PINECONE",
+                "POSTGRE_SQL"
+              ],
+              "defaultType": "connection.local",
+              "defaultValue": "",
+              "required": "true",
+              "helpTip": "Vector store connection to be used"
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "embeddingConfigKey",
+              "displayName": "Embedding model Connection",
+              "inputType": "connection",
+              "allowedConnectionTypes": [
+                "OPEN_AI"
+              ],
+              "defaultType": "connection.local",
+              "defaultValue": "",
+              "required": "true",
+              "helpTip": "AI service connection to be used"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "attributeGroup",
+      "value": {
+        "groupName": "Basic",
+        "elements": [
+          {
+            "type": "attribute",
+            "value": {
+              "name": "input",
+              "displayName": "Input",
+              "inputType": "stringOrExpression",
+              "defaultValue": "",
+              "required": "true",
+              "helpTip": "An array of JSON objects in the format of {\"text\":\"test\",\"embedding\":\"[array of numbers]\"}"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "attributeGroup",
+      "value": {
+        "groupName": "Parse",
+        "elements": [
+          {
+            "type": "attribute",
+            "value": {
+              "name": "needParse",
+              "displayName": "Parse",
+              "inputType": "checkbox",
+              "defaultValue": true,
+              "required": "true",
+              "helpTip": "Need to parse the input?"
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "parseType",
+              "displayName": "Type",
+              "inputType": "combo",
+              "comboValues": [
+                "pdf-to-text",
+                "markdown-to-text",
+                "html-to-text",
+                "doc-to-text",
+                "docx-to-text",
+                "xls-to-text",
+                "xlsx-to-text",
+                "ppt-to-text",
+                "pptx-to-text"
+              ],
+              "defaultValue": "pdf-to-text",
+              "required": "true",
+              "helpTip": "Select the content type of the input",
+              "enableCondition": [
+                {
+                  "needParse": true
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "attributeGroup",
+      "value": {
+        "groupName": "Split",
+        "elements": [
+          {
+            "type": "attribute",
+            "value": {
+              "name": "needSplit",
+              "displayName": "Split",
+              "inputType": "checkbox",
+              "defaultValue": true,
+              "required": "true",
+              "helpTip": "Need to split the input?"
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "splitStrategy",
+              "displayName": "Strategy",
+              "inputType": "combo",
+              "comboValues": [
+                "Recursive",
+                "ByParagraph",
+                "BySentence"
+              ],
+              "defaultValue": "Recursive",
+              "required": "true",
+              "helpTip": "Select the splitting strategy",
+              "enableCondition": [
+                {
+                  "needSplit": true
+                }
+              ]
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "maxSegmentSize",
+              "displayName": "Max segment size",
+              "inputType": "stringOrExpression",
+              "defaultValue": "1000",
+              "required": "false",
+              "helpTip": "Max segment size in tokens",
+              "enableCondition": [
+                {
+                  "needSplit": true
+                }
+              ]
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "maxOverlapSize",
+              "displayName": "Max overlap size",
+              "inputType": "stringOrExpression",
+              "defaultValue": "200",
+              "required": "false",
+              "helpTip": "Max overlap size in tokens",
+              "enableCondition": [
+                {
+                  "needSplit": true
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "attributeGroup",
+      "value": {
+        "groupName": "Embedding",
+        "elements": [
+          {
+            "type": "attribute",
+            "value": {
+              "name": "needEmbedding",
+              "displayName": "Generate Embedding",
+              "inputType": "checkbox",
+              "defaultValue": true,
+              "required": "true",
+              "helpTip": "Need to generate embedding?"
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "embeddingModel",
+              "displayName": "Embedding model",
+              "inputType": "combo",
+              "comboValues": [
+                "text-embedding-3-small",
+                "text-embedding-3-small",
+                "text-embedding-ada-002"
+              ],
+              "defaultValue": "text-embedding-3-small",
+              "required": "true",
+              "helpTip": "Select the splitting strategy",
+              "enableCondition": [
+                {
+                  "needEmbedding": true
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "attributeGroup",
+      "value": {
+        "groupName": "Response",
+        "elements": [
+          {
+            "type": "attribute",
+            "value": {
+              "name": "responseVariable",
+              "displayName": "Response Variable Name",
+              "inputType": "stringOrExpression",
+              "defaultValue": "",
+              "required": "true",
+              "deriveResponseVariable": true,
+              "helpTip": "Define the response variable"
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "overwriteBody",
+              "displayName": "Overwrite Message Body",
+              "inputType": "checkbox",
+              "defaultValue": "false",
+              "helpTip": "Replace the Message Body in Message Context with the response of the operation (This will remove the payload from the above variable).",
+              "required": "false"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

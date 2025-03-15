@@ -1,8 +1,8 @@
 {
   "connectorName": "ai",
-  "operationName": "generateEmbeddings",
-  "title": "Load documents",
-  "help": "<h1>Define LLM prompts</h1><b>Define LLM prompts</b><br><br><ul><li><a href=\"https://ei.docs.wso2.com/en/latest/micro-integrator/references/connectors/file-connector/file-connector-config/\"> More Help </a></li></ul>",
+  "operationName": "getFromKnowledge",
+  "title": "Search the vector store",
+  "help": "",
   "elements": [
     {
       "type": "attributeGroup",
@@ -12,7 +12,25 @@
           {
             "type": "attribute",
             "value": {
-              "name": "configRef",
+              "name": "vectorStoreConfigKey",
+              "displayName": "Vector store Connection",
+              "inputType": "connection",
+              "allowedConnectionTypes": [
+                "MI_VECTOR_STORE",
+                "CHROMA_DB",
+                "PINECONE",
+                "POSTGRE_SQL"
+              ],
+              "defaultType": "connection.local",
+              "defaultValue": "",
+              "required": "true",
+              "helpTip": "Vector store connection to be used"
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "embeddingConfigKey",
               "displayName": "Embedding model Connection",
               "inputType": "connection",
               "allowedConnectionTypes": [
@@ -37,19 +55,61 @@
                     "inputType": "stringOrExpression",
                     "defaultValue": "",
                     "required": "true",
-                    "helpTip": "A string or a JSON array of Strings"
+                    "helpTip": "An array of JSON objects in the format of {\"text\":\"test\",\"embedding\":\"[array of numbers]\"}"
                   }
                 },
                 {
                   "type": "attribute",
                   "value": {
-                    "name": "model",
+                    "name": "needEmbedding",
+                    "displayName": "Embed Input",
+                    "inputType": "checkbox",
+                    "defaultValue": true,
+                    "required": "true",
+                    "helpTip": "Need to embed the input?"
+                  }
+                },
+                {
+                  "type": "attribute",
+                  "value": {
+                    "name": "embeddingModel",
                     "displayName": "Embedding model",
                     "inputType": "combo",
-                    "comboValues": ["text-embedding-3-small", "text-embedding-3-small", "text-embedding-ada-002"],
+                    "comboValues": [
+                      "text-embedding-3-small",
+                      "text-embedding-3-small",
+                      "text-embedding-ada-002"
+                    ],
                     "defaultValue": "text-embedding-3-small",
                     "required": "true",
-                    "helpTip": "Select the splitting strategy"
+                    "helpTip": "Select the splitting strategy",
+                    "enableCondition": [
+                      {
+                        "needEmbedding": true
+                      }
+                    ]
+                  }
+                },
+                {
+                  "type": "attribute",
+                  "value": {
+                    "name": "maxResults",
+                    "displayName": "Max Results",
+                    "inputType": "stringOrExpression",
+                    "defaultValue": "5",
+                    "required": "false",
+                    "helpTip": "Maximum number of results to be returned"
+                  }
+                },
+                {
+                  "type": "attribute",
+                  "value": {
+                    "name": "minScore",
+                    "displayName": "Min Score",
+                    "inputType": "stringOrExpression",
+                    "defaultValue": "0.75",
+                    "required": "false",
+                    "helpTip": "Minimum score to be considered as a valid result"
                   }
                 }
               ]

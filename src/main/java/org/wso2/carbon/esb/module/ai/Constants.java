@@ -105,4 +105,36 @@ public class Constants {
     public static final String KNOWLEDGE = "knowledge";
     public static final String HISTORY = "history";
     public static final String MAX_HISTORY = "maxHistory";
+
+    // Agent Constants
+    public static final String TOOL_EXECUTION_CORRELATION = "toolExecutionCorrelation";
+    public static final String AGENT_TOOL_EXECUTION = "agentToolExecution";
+    public static final String AGENT_SHARED_DATA_HOLDER = "AGENT_SHARED_DATA_HOLDER";
+    public static final String TOOL_EXECUTION_DATA_HOLDER = "toolExecutionDataHolder";
+    public static final String MEMORY_ID = "memoryId";
+    public static final String USER_ID = "userID";
+    public static final String TOOL_EXECUTION_FAILED = "Tool execution failed";
+    public static final String CONNECTIONS = "connections";
+    public static final String TOOLS = "tools";
+    public static final String NAME = "name";
+    public static final String TEMPLATE = "template";
+    public static final String RESULT_EXPRESSION = "resultExpression";
+    public static final String DESCRIPTION = "description";
+
+    // Preserve message context properties
+    public static final String ORIGINAL_PAYLOAD_BEFORE_INVOKE_TEMPLATE = "ORIGINAL_PAYLOAD_BEFORE_INVOKE_TEMPLATE";
+    public static final String ORIGINAL_MESSAGE_TYPE_BEFORE_INVOKE_TEMPLATE =
+            "_ORIGINAL_MESSAGE_TYPE_BEFORE_INVOKE_TEMPLATE";
+    public static final String ORIGINAL_CONTENT_TYPE_BEFORE_INVOKE_TEMPLATE =
+            "_ORIGINAL_CONTENT_TYPE_BEFORE_INVOKE_TEMPLATE";
+    public static final String ORIGINAL_NO_ENTITY_BODY_BEFORE_INVOKE_TEMPLATE =
+            "_ORIGINAL_NO_ENTITY_BODY_BEFORE_INVOKE_TEMPLATE";
+    public static final String ORIGINAL_TRANSPORT_HEADERS_BEFORE_INVOKE_TEMPLATE =
+            "_ORIGINAL_TRANSPORT_HEADERS_BEFORE_INVOKE_TEMPLATE";
+
+    // Response processor constants
+    public static final String PAYLOAD = "payload";
+    public static final String HEADERS = "headers";
+    public static final String ATTRIBUTES = "attributes";
+    public static final String TOOL_EXECUTION_TIMEOUT = "toolExecutionTimeout";
 }

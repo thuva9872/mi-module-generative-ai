@@ -16,17 +16,17 @@
    specific language governing permissions and limitations
    under the License.
 -->
-<component name="config" type="synapse/template" >
-    <subComponents> 
-		<component name="init" >
-			<file>init.xml</file>
-			<description>Init operation</description>
-			<hidden>true</hidden>
-		</component>
-		<component name="invokeConnection">
-			<file>invokeConnection.xml</file>
-			<description>Invoke connection operation</description>
-			<hidden>true</hidden>
-		</component>
-    </subComponents>    
+<component name="knowledgeBase" displayName="Knowledge Base (Vector Database)" type="synapse/template">
+    <subComponents>
+        <component name="addToKnowledge">
+            <displayName>Add to Knowledge</displayName>
+            <file>addToKnowledge.xml</file>
+            <description>Stores the knowledge to the vector database</description>
+        </component>
+        <component name="getFromKnowledge">
+            <displayName>Get from Knowledge</displayName>
+            <file>getFromKnowledge.xml</file>
+            <description>Retrieve knowledge from the vector database</description>
+        </component>
+    </subComponents>
 </component>

@@ -16,17 +16,11 @@
    specific language governing permissions and limitations
    under the License.
 -->
-<component name="config" type="synapse/template" >
-    <subComponents> 
-		<component name="init" >
-			<file>init.xml</file>
-			<description>Init operation</description>
-			<hidden>true</hidden>
-		</component>
-		<component name="invokeConnection">
-			<file>invokeConnection.xml</file>
-			<description>Invoke connection operation</description>
-			<hidden>true</hidden>
-		</component>
-    </subComponents>    
+<component name="agent" displayName="Agent" type="synapse/template">
+    <subComponents>
+        <component name="agent">
+            <file>agent.xml</file>
+            <description>AI Agent</description>
+        </component>
+    </subComponents>
 </component>

@@ -15,13 +15,15 @@
    specific language governing permissions and limitations
    under the License.
 -->
-<template xmlns="http://ws.apache.org/ns/synapse" name="chat">
+<template xmlns="http://ws.apache.org/ns/synapse" name="agent">
+    <parameter name="connections" description="Connections"/>
+    <parameter name="userID" description="User ID"/>
     <parameter name="system" description="System prompt"/>
-    <parameter name="userID" description="System prompt"/>
     <parameter name="prompt" description="Prompt name"/>
-    <parameter name="outputType" description="Response type"/>
+    <!--    <parameter name="outputType" description="Response type"/>-->
     <parameter name="responseVariable" description="Response variable name"/>
-    <parameter name="overwriteBody" description="Replace the Message Body in Message Context with the response of the operation."/>
+    <parameter name="overwriteBody"
+               description="Replace the Message Body in Message Context with the response of the operation."/>
 
     <parameter name="modelName" description="Model name"/>
     <parameter name="temperature" description="Temperature"/>
@@ -30,11 +32,24 @@
     <parameter name="frequencyPenalty" description="Frequency penalty"/>
     <parameter name="seed" description="Seed"/>
 
-    <parameter name="knowledge" description="Knowledge store"/>
-    <parameter name="history" description="Chat history"/>
     <parameter name="maxHistory" description="Max chat messages to be used in history"/>
+    <parameter name="toolExecutionTimeout" description="Tool execution timeout"/>
+    <parameter name="tools" description="Tool declaration"/>
 
     <sequence>
-        <class name="org.wso2.carbon.esb.module.ai.operations.LLMChat" />
+        <class name="org.wso2.carbon.esb.module.ai.config.Configure"/>
+        <filter xpath="${exists(props.synapse._LLM_CONFIG_KEY)}">
+            <then>
+                <ai.invokeConnection configKey="{${props.synapse._LLM_CONFIG_KEY}}"/>
+                <class name="org.wso2.carbon.esb.module.ai.operations.agent.Agent"/>
+                <property name="_LLM_CONFIG_KEY" scope="default" action="remove"/>
+            </then>
+            <else>
+                <payloadFactory media-type="json" template-type="default">
+                    <format>{"error":"LLM connection is not provided"}</format>
+                </payloadFactory>
+                <throwError type="string" errorMessage="{${payload}}"/>
+            </else>
+        </filter>
     </sequence>
 </template>

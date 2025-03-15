@@ -67,7 +67,11 @@ public enum Errors {
     CHAT_COMPLETION_ERROR("AI-CH-0004", "Error occurred from LLM side"),
 
     // Prompt related errors
-    ERROR_PARSE_PROMPT("AI-PR-0001", "Error parsing the prompt");
+    ERROR_PARSE_PROMPT("AI-PR-0001", "Error parsing the prompt"),
+
+    // Agent related errors
+    EXCEEDED_SEQUENTIAL_TOOL_EXECUTIONS("AI-AG-0001",
+            "Exceeded the maximum number of sequential tool executions");
 
     private final String code;
     private final String message;

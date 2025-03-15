@@ -15,13 +15,13 @@
    specific language governing permissions and limitations
    under the License.
 -->
-<template xmlns="http://ws.apache.org/ns/synapse" name="chat">
+<template xmlns="http://ws.apache.org/ns/synapse" name="agent">
     <parameter name="system" description="System prompt"/>
-    <parameter name="userID" description="System prompt"/>
     <parameter name="prompt" description="Prompt name"/>
     <parameter name="outputType" description="Response type"/>
     <parameter name="responseVariable" description="Response variable name"/>
-    <parameter name="overwriteBody" description="Replace the Message Body in Message Context with the response of the operation."/>
+    <parameter name="overwriteBody"
+               description="Replace the Message Body in Message Context with the response of the operation."/>
 
     <parameter name="modelName" description="Model name"/>
     <parameter name="temperature" description="Temperature"/>
@@ -33,8 +33,12 @@
     <parameter name="knowledge" description="Knowledge store"/>
     <parameter name="history" description="Chat history"/>
     <parameter name="maxHistory" description="Max chat messages to be used in history"/>
+    <parameter name="tools" description="Tool declaration"/>
 
     <sequence>
-        <class name="org.wso2.carbon.esb.module.ai.operations.LLMChat" />
+        <class name="org.wso2.carbon.esb.module.ai.operations.agent.Agent"/>
+        <log category="INFO" level="full">
+            <property name="message" value="Agent response received"/>
+        </log>
     </sequence>
 </template>

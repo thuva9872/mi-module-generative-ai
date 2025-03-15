@@ -16,17 +16,17 @@
    specific language governing permissions and limitations
    under the License.
 -->
-<component name="config" type="synapse/template" >
-    <subComponents> 
-		<component name="init" >
-			<file>init.xml</file>
-			<description>Init operation</description>
-			<hidden>true</hidden>
-		</component>
-		<component name="invokeConnection">
-			<file>invokeConnection.xml</file>
-			<description>Invoke connection operation</description>
-			<hidden>true</hidden>
-		</component>
-    </subComponents>    
+<component name="chat" displayName="Chat" type="synapse/template">
+    <subComponents>
+        <component name="chat">
+            <displayName>Chat</displayName>
+            <file>chat.xml</file>
+            <description>LLM chat</description>
+        </component>
+        <component name="ragChat">
+            <displayName>RAG Chat</displayName>
+            <file>ragChat.xml</file>
+            <description>LLM chat</description>
+        </component>
+    </subComponents>
 </component>

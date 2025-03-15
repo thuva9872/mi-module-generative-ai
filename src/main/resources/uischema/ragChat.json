@@ -1,0 +1,282 @@
+{
+  "connectorName": "ai",
+  "operationName": "ragChat",
+  "title": "RAG Chat completion",
+  "help": "",
+  "elements": [
+    {
+      "type": "attribute",
+      "value": {
+        "name": "embeddingConfigKey",
+        "displayName": "Embedding model Connection",
+        "inputType": "connection",
+        "allowedConnectionTypes": [
+          "OPEN_AI"
+        ],
+        "defaultType": "connection.local",
+        "defaultValue": "",
+        "required": "true",
+        "helpTip": "Embedding model connection to be used"
+      }
+    },
+    {
+      "type": "attribute",
+      "value": {
+        "name": "vectorStoreConfigKey",
+        "displayName": "Vector store Connection",
+        "inputType": "connection",
+        "allowedConnectionTypes": [
+          "MI_VECTOR_STORE",
+          "CHROMA_DB",
+          "PINECONE",
+          "POSTGRE_SQL"
+        ],
+        "defaultType": "connection.local",
+        "defaultValue": "",
+        "required": "true",
+        "helpTip": "Vector store connection to be used"
+      }
+    },
+    {
+      "type": "attribute",
+      "value": {
+        "name": "llmConfigKey",
+        "displayName": "LLM Connection",
+        "inputType": "connection",
+        "allowedConnectionTypes": [
+          "OPEN_AI",
+          "ANTHROPIC",
+          "AZURE_OPEN_AI",
+          "MISTRAL_AI",
+          "DEEPSEEK"
+        ],
+        "defaultType": "connection.local",
+        "defaultValue": "",
+        "required": "true",
+        "helpTip": "LLM service connection to be used"
+      }
+    },
+    {
+      "type": "attributeGroup",
+      "value": {
+        "groupName": "Basic",
+        "elements": [
+          {
+            "type": "attribute",
+            "value": {
+              "name": "userID",
+              "displayName": "User ID",
+              "inputType": "stringOrExpression",
+              "required": "true",
+              "helpTip": "Unique user identifier"
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "prompt",
+              "displayName": "User query/prompt",
+              "inputType": "expressionTextArea",
+              "defaultValue": "",
+              "required": "true",
+              "helpTip": "Query the LLM"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "attributeGroup",
+      "value": {
+        "groupName": "Embedding",
+        "elements": [
+          {
+            "type": "attribute",
+            "value": {
+              "name": "embeddingModel",
+              "displayName": "Embedding model",
+              "inputType": "combo",
+              "comboValues": [
+                "text-embedding-3-small",
+                "text-embedding-3-small",
+                "text-embedding-ada-002"
+              ],
+              "defaultValue": "text-embedding-3-small",
+              "required": "true",
+              "helpTip": "Select the splitting strategy"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "attributeGroup",
+      "value": {
+        "groupName": "Vector Store",
+        "elements": [
+          {
+            "type": "attribute",
+            "value": {
+              "name": "maxResults",
+              "displayName": "Max Results",
+              "inputType": "stringOrExpression",
+              "defaultValue": "5",
+              "required": "false",
+              "helpTip": "Maximum number of results to be returned"
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "minScore",
+              "displayName": "Min Score",
+              "inputType": "stringOrExpression",
+              "defaultValue": "0.75",
+              "required": "false",
+              "helpTip": "Minimum score to be considered as a valid result"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "attributeGroup",
+      "value": {
+        "groupName": "Chat",
+        "elements": [
+          {
+            "type": "attribute",
+            "value": {
+              "name": "modelName",
+              "displayName": "Model name",
+              "inputType": "stringOrExpression",
+              "defaultValue": "gpt-4o",
+              "required": "true",
+              "helpTip": "Name of the model to use"
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "outputType",
+              "displayName": "Output type",
+              "inputType": "combo",
+              "comboValues": [
+                "string",
+                "integer",
+                "float",
+                "boolean"
+              ],
+              "defaultValue": "string",
+              "required": "true",
+              "helpTip": "Define type of the output"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "attributeGroup",
+      "value": {
+        "groupName": "Response",
+        "elements": [
+          {
+            "type": "attribute",
+            "value": {
+              "name": "responseVariable",
+              "displayName": "Response Variable Name",
+              "inputType": "string",
+              "deriveResponseVariable": true,
+              "required": "true",
+              "helpTip": "Name of the variable to which the output of the operation should be assigned"
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "overwriteBody",
+              "displayName": "Overwrite Message Body",
+              "inputType": "checkbox",
+              "defaultValue": "false",
+              "helpTip": "Replace the Message Body in Message Context with the response of the operation (This will remove the payload from the above variable).",
+              "required": "false"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "attributeGroup",
+      "value": {
+        "groupName": "Advanced",
+        "elements": [
+          {
+            "type": "attribute",
+            "value": {
+              "name": "system",
+              "displayName": "System prompt",
+              "inputType": "textAreaOrExpression",
+              "required": "false",
+              "helpTip": "Give instructions to LLM"
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "maxTokens",
+              "displayName": "Max tokens",
+              "inputType": "string",
+              "defaultValue": "4069",
+              "required": "false",
+              "helpTip": "Maximum number of tokens to generate"
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "temperature",
+              "displayName": "Temperature",
+              "inputType": "string",
+              "defaultValue": "0.7",
+              "required": "false",
+              "helpTip": "Controls randomness: lower temperature results in less randomness"
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "topP",
+              "displayName": "Top P",
+              "inputType": "string",
+              "defaultValue": "1",
+              "required": "false",
+              "helpTip": "Controls diversity: lower value results in more diversity"
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "frequencyPenalty",
+              "displayName": "Frequency penalty",
+              "inputType": "string",
+              "defaultValue": "0",
+              "required": "false",
+              "helpTip": "Controls repetition: lower value results in less repetition"
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "seed",
+              "displayName": "Seed",
+              "inputType": "string",
+              "defaultValue": "",
+              "required": "false",
+              "helpTip": "Seed"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

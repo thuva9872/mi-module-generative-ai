@@ -21,9 +21,9 @@ package org.wso2.carbon.esb.module.ai.operations;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.UserMessage;
-import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.model.chat.ChatLanguageModel;
@@ -132,6 +132,7 @@ public class LLMChat extends AbstractAIMediator {
             knowledgeRetriever = query -> knowledgeTexts;
         }
 
+        // TODO: add memory support
         ChatMemory chatMemory = null;
         if (chatHistory != null) {
             List<ChatMessage> chatMessages = parseAndValidateChatHistory(chatHistory);

@@ -16,35 +16,37 @@
    specific language governing permissions and limitations
    under the License.
 -->
-<component name="functions" type="synapse/template" >
-    <subComponents> 
-		<component name="chat" >
-			<file>chat.xml</file>
-			<description>LLM chat</description>
-		</component>
+<component name="functions" type="synapse/template">
+	<subComponents>
 		<component name="prompt">
 			<file>prompt.xml</file>
 			<description>LLM chat prompt</description>
+			<hidden>true</hidden>
 		</component>
-		<component name="addToStore" >
+		<component name="addToStore">
 			<file>addToStore.xml</file>
 			<description>LLM chat prompt</description>
+			<hidden>true</hidden>
 		</component>
-		<component name="parse" >
+		<component name="parse">
 			<file>parse.xml</file>
 			<description>Parse Documents</description>
+			<hidden>true</hidden>
 		</component>
-		<component name="split" >
+		<component name="split">
 			<file>split.xml</file>
 			<description>Split Documents</description>
+			<hidden>true</hidden>
 		</component>
-		<component name="generateEmbeddings" >
+		<component name="generateEmbeddings">
 			<file>generateEmbeddings.xml</file>
 			<description>Embed document chunks</description>
+			<hidden>true</hidden>
 		</component>
-		<component name="searchStore" >
+		<component name="searchStore">
 			<file>searchStore.xml</file>
 			<description>Retrieve documents</description>
+			<hidden>true</hidden>
 		</component>
-    </subComponents>
+	</subComponents>
 </component>

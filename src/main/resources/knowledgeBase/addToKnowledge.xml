@@ -1,0 +1,92 @@
+<!--
+ 	Copyright (c) 2025, WSO2 LLC. (http://www.wso2.org) All Rights Reserved.
+
+    WSO2 LLC. licenses this file to you under the Apache License,
+    Version 2.0 (the "License"); you may not use this file except
+    in compliance with the License.
+    You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing,
+   software distributed under the License is distributed on an
+   "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+   KIND, either express or implied.  See the License for the
+   specific language governing permissions and limitations
+   under the License.
+-->
+<template xmlns="http://ws.apache.org/ns/synapse" name="addToKnowledge">
+    <parameter name="connections" description="Connections"/>
+
+    <parameter name="input" description="Input"/>
+
+    <parameter name="needParse" description="Need to parse the input"/>
+    <parameter name="parseType" description="Parse type"/>
+
+    <parameter name="needSplit" description="Need to split the input"/>
+    <parameter name="splitStrategy" description="Split strategy"/>
+    <parameter name="maxSegmentSize" description="Max segment size"/>
+    <parameter name="maxOverlapSize" description="Max overlap size"/>
+
+    <parameter name="needEmbedding" description="Need to embed the input"/>
+    <parameter name="embeddingModel" description="Embedding model"/>
+
+    <parameter name="responseVariable" description="Response variable name"/>
+    <parameter name="overwriteBody"
+               description="Replace the Message Body in Message Context with the response of the operation."/>
+    <sequence>
+        <class name="org.wso2.carbon.esb.module.ai.config.Configure"/>
+        <filter xpath="${exists(props.synapse._VECTOR_STORE_CONFIG_KEY) &amp;&amp; (not(boolean(params.functionParams.needEmbedding)) || exists(props.synapse._EMBEDDING_CONFIG_KEY))}">
+            <then>
+                <variable name="ADD_TO_KNOWLEDGE_INPUT" expression="${params.functionParams.input}"/>
+                <filter xpath="${boolean(params.functionParams.needParse)}">
+                    <ai.parse>
+                        <input>{${vars.ADD_TO_KNOWLEDGE_INPUT}}</input>
+                        <type>{${params.functionParams.parseType}}</type>
+                        <responseVariable>ADD_TO_KNOWLEDGE_INPUT</responseVariable>
+                        <overwriteBody>false</overwriteBody>
+                    </ai.parse>
+                    <variable name="ADD_TO_KNOWLEDGE_INPUT" expression="${vars.ADD_TO_KNOWLEDGE_INPUT.payload}"/>
+                </filter>
+                <filter xpath="${boolean(params.functionParams.needSplit)}">
+                    <ai.split>
+                        <input>{${vars.ADD_TO_KNOWLEDGE_INPUT}}</input>
+                        <strategy>{${params.functionParams.splitStrategy}}</strategy>
+                        <maxSegmentSize>{${params.functionParams.maxSegmentSize}}</maxSegmentSize>
+                        <maxOverlapSize>{${params.functionParams.maxOverlapSize}}</maxOverlapSize>
+                        <responseVariable>ADD_TO_KNOWLEDGE_INPUT</responseVariable>
+                        <overwriteBody>false</overwriteBody>
+                    </ai.split>
+                    <variable name="ADD_TO_KNOWLEDGE_INPUT" expression="${vars.ADD_TO_KNOWLEDGE_INPUT.payload}"/>
+                </filter>
+                <filter xpath="${boolean(params.functionParams.needEmbedding)}">
+                    <ai.invokeConnection configKey="{${props.synapse._EMBEDDING_CONFIG_KEY}}"/>
+                    <ai.generateEmbeddings>
+                        <input>{${vars.ADD_TO_KNOWLEDGE_INPUT}}</input>
+                        <model>{${params.functionParams.embeddingModel}}</model>
+                        <responseVariable>ADD_TO_KNOWLEDGE_INPUT</responseVariable>
+                        <overwriteBody>false</overwriteBody>
+                    </ai.generateEmbeddings>
+                    <variable name="ADD_TO_KNOWLEDGE_INPUT" expression="${vars.ADD_TO_KNOWLEDGE_INPUT.payload}"/>
+                </filter>
+                <ai.invokeConnection configKey="{${props.synapse._VECTOR_STORE_CONFIG_KEY}}"/>
+                <ai.addToStore>
+                    <input>{${vars.ADD_TO_KNOWLEDGE_INPUT}}</input>
+                    <responseVariable>{${params.functionParams.responseVariable}}</responseVariable>
+                    <overwriteBody>{${params.functionParams.overwriteBody}}</overwriteBody>
+                </ai.addToStore>
+                <property name="_VECTOR_STORE_CONFIG_KEY" scope="default" action="remove"/>
+                <property name="_EMBEDDING_CONFIG_KEY" scope="default" action="remove"/>
+                <class name="org.wso2.carbon.esb.module.ai.config.ResponseProcessor"/>
+            </then>
+            <else>
+                <payloadFactory media-type="json" template-type="default">
+                    <format><![CDATA[{
+                        "error": "The following connections are not provided: ${not(exists(props.synapse._VECTOR_STORE_CONFIG_KEY)) ? 'Vector Store Connection' : ''}${(boolean(params.functionParams.needEmbedding) && not(exists(props.synapse._EMBEDDING_CONFIG_KEY))) ? ', Embedding Model Connection' : ''}"
+                        }]]></format>
+                </payloadFactory>
+                <throwError type="string" errorMessage="{${payload}}"/>
+            </else>
+        </filter>
+    </sequence>
+</template>
