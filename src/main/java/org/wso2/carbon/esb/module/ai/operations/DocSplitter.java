@@ -47,10 +47,14 @@ public class DocSplitter extends AbstractAIMediator {
 
     @Override
     public void execute(MessageContext mc) {
+
         String input = getMediatorParameter(mc, Constants.INPUT, String.class, false);
         String strategy = getMediatorParameter(mc, Constants.STRATEGY, String.class, false);
         Integer maxSegmentSize = getMediatorParameter(mc, Constants.MAX_SEGMENT_SIZE, Integer.class, true);
         Integer maxOverlapSize = getMediatorParameter(mc, Constants.MAX_OVERLAP_SIZE, Integer.class, true);
+
+        String responseVariable = getMediatorParameter(mc, Constants.RESPONSE_VARIABLE, String.class, false);
+        Boolean overwriteBody = getMediatorParameter(mc, Constants.OVERWRITE_BODY, Boolean.class, false);
 
         maxSegmentSize = (maxSegmentSize == null) ? 1000 : maxSegmentSize;
         maxOverlapSize = (maxOverlapSize == null) ? 200 : maxOverlapSize;
@@ -81,6 +85,6 @@ public class DocSplitter extends AbstractAIMediator {
             handleConnectorException(Errors.FAILED_TO_SPLIT, mc);
         }
 
-        handleConnectorResponse(mc, segments, null, null);
+        handleConnectorResponse(mc, segments, null, null, responseVariable, overwriteBody);
     }
 }

@@ -16,6 +16,7 @@ public class ResponseProcessor extends AbstractAIMediator {
 
         Object responseVariable = getParameter(
                 messageContext, Constants.RESPONSE_VARIABLE);
+        Boolean overWriteBody = getMediatorParameter(messageContext, Constants.OVERWRITE_BODY, Boolean.class, false);
         if (!(responseVariable instanceof String)) {
             handleException("Invalid value for responseVariable", messageContext);
         }
@@ -45,7 +46,8 @@ public class ResponseProcessor extends AbstractAIMediator {
                 attributes.put(entry.getKey(), entry.getValue());
             }
         }
-        handleConnectorResponse(messageContext, payload, headers, attributes);
+        handleConnectorResponse(messageContext, payload, headers, attributes, responseVariable.toString(),
+                overWriteBody);
 
         // Restore the original payload so that the InvokeMediator can handle the response
         restoreOriginalPayload(messageContext);

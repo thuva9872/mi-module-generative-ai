@@ -17,7 +17,7 @@
 -->
 <template xmlns="http://ws.apache.org/ns/synapse" name="ragChat">
     <parameter name="connections" description="Connections"/>
-    <parameter name="userID" description="User ID"/>
+<!--    <parameter name="userID" description="User ID"/>-->
     <parameter name="prompt" description="Prompt name"/>
     <parameter name="outputType" description="Response type"/>
     <parameter name="responseVariable" description="Response variable name"/>

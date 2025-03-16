@@ -61,6 +61,9 @@ public class EmbeddingStoreRetriever extends AbstractAIMediator {
         // TODO: Implement filter parsing
         String filterString = getMediatorParameter(mc, Constants.FILTER, String.class, true);
 
+        String responseVariable = getMediatorParameter(mc, Constants.RESPONSE_VARIABLE, String.class, false);
+        Boolean overwriteBody = getMediatorParameter(mc, Constants.OVERWRITE_BODY, Boolean.class, false);
+
         Embedding embedding = parseAndValidateInput(input);
         if (embedding == null) {
             handleConnectorException(Errors.INVALID_INPUT_FOR_EMBEDDING_RETRIEVAL, mc);
@@ -79,7 +82,7 @@ public class EmbeddingStoreRetriever extends AbstractAIMediator {
         } catch (Exception e) {
             handleConnectorException(Errors.EMBEDDING_RETRIEVAL_ERROR, mc, e);
         }
-        handleConnectorResponse(mc, matches, null, null);
+        handleConnectorResponse(mc, matches, null, null, responseVariable, overwriteBody);
     }
 
     private Embedding parseAndValidateInput(String input) {

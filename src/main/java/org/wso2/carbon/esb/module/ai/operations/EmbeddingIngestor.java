@@ -50,6 +50,9 @@ public class EmbeddingIngestor extends AbstractAIMediator {
         String connectionName = getProperty(mc, Constants.CONNECTION_NAME, String.class, false);
         String embeddings = getMediatorParameter(mc, Constants.INPUT, String.class, false);
 
+        String responseVariable = getMediatorParameter(mc, Constants.RESPONSE_VARIABLE, String.class, false);
+        Boolean overwriteBody = getMediatorParameter(mc, Constants.OVERWRITE_BODY, Boolean.class, false);
+
         List<TextEmbedding> textEmbeddings = parseAndValidateInput(embeddings);
         if (textEmbeddings == null) {
             handleConnectorException(Errors.INVALID_INPUT_FOR_EMBEDDING_INGESTION, mc);
@@ -59,14 +62,16 @@ public class EmbeddingIngestor extends AbstractAIMediator {
         try {
             VectorStore vectorStore = VectorStoreConnectionHandler.getVectorStore(connectionName, mc);
             vectorStore.add(textEmbeddings);
+            handleConnectorResponse(mc, Map.of("success", true),
+                    null, Map.of("SUCCESS", "true"), responseVariable, overwriteBody);
+            return;
         } catch (VectorStoreException e) {
             handleConnectorException(e.getError(), mc, e);
         } catch (Exception e) {
             handleConnectorException(Errors.EMBEDDING_INJECTION_ERROR, mc, e);
-        } finally {
-            handleConnectorResponse(mc, Map.of("success", true),
-                    null, Map.of("SUCCESS", "true"));
         }
+        handleConnectorResponse(mc, Map.of("success", false), null, Map.of("SUCCESS", "false"), responseVariable,
+                overwriteBody);
     }
 
     private List<TextEmbedding> parseAndValidateInput(String input) {

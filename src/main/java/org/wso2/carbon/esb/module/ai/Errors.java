@@ -71,8 +71,9 @@ public enum Errors {
 
     // Agent related errors
     EXCEEDED_SEQUENTIAL_TOOL_EXECUTIONS("AI-AG-0001",
-            "Exceeded the maximum number of sequential tool executions");
-
+            "Exceeded the maximum number of sequential tool executions"),
+    INVALID_TOOL_CONFIGURATION("AI-AG-0002", "Invalid tool configuration"),
+    AGENT_ID_NOT_PROVIDED("AI-AG-0003", "Agent ID not provided");
     private final String code;
     private final String message;
 

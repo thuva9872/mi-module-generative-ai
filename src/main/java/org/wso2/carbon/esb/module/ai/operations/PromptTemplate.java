@@ -35,9 +35,12 @@ public class PromptTemplate extends AbstractAIMediator {
     public void execute(MessageContext mc) {
         String prompt = getMediatorParameter(mc, Constants.PROMPT, String.class, false);
 
+        String responseVariable = getMediatorParameter(mc, Constants.RESPONSE_VARIABLE, String.class, false);
+        Boolean overwriteBody = getMediatorParameter(mc, Constants.OVERWRITE_BODY, Boolean.class, false);
+
         try {
             String parsedPrompt = InlineExpressionUtil.processInLineSynapseExpressionTemplate(mc, prompt);
-            handleConnectorResponse(mc, parsedPrompt, null, null);
+            handleConnectorResponse(mc, parsedPrompt, null, null, responseVariable, overwriteBody);
         } catch (JaxenException e) {
             handleConnectorException(Errors.ERROR_PARSE_PROMPT, mc, e);
         }

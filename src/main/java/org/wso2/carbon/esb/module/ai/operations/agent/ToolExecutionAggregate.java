@@ -67,6 +67,8 @@ public class ToolExecutionAggregate extends TimerTask {
      */
     private FaultHandler faultHandler;
 
+    private String agentID;
+
     /**
      * Save aggregation properties and timeout
      *
@@ -129,7 +131,7 @@ public class ToolExecutionAggregate extends TimerTask {
                 // get total messages for this group, from the first message we have collected
                 MessageContext mc = messages.get(0);
                 Object prop = mc.getProperty(Constants.AGENT_TOOL_EXECUTION +
-                        (agentMediator.getAgentID() != null ? "." + agentMediator.getAgentID() : ""));
+                        (getAgentID() != null ? "." + getAgentID() : ""));
 
                 if (prop != null && prop instanceof String) {
                     String[] msgSequence = prop.toString().split(
@@ -254,6 +256,16 @@ public class ToolExecutionAggregate extends TimerTask {
     public void clear() {
 
         messages = null;
+    }
+
+    public String getAgentID() {
+
+        return agentID;
+    }
+
+    public void setAgentID(String agentID) {
+
+        this.agentID = agentID;
     }
 
     private class ToolExecutionTimeout implements Runnable {

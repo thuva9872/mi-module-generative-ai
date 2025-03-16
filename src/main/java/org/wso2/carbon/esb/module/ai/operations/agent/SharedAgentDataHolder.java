@@ -20,6 +20,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class SharedAgentDataHolder extends SharedDataHolder {
 
     protected Log log = LogFactory.getLog(this.getClass());
+    private String agentId;
     private AiServiceContext aiServiceContext;
     private String memoryId;
     private List<ToolExecution> toolExecutions;
@@ -28,6 +29,8 @@ public class SharedAgentDataHolder extends SharedDataHolder {
     private ChatRequestParameters chatRequestParameters;
     private ChatResponse finishChatResponse;
     private List<ToolExecutionRequest> currentToolExecutionRequests;
+    private String responseVariable;
+    private boolean overwriteBody;
     private ReentrantLock lock = new ReentrantLock();
 
     public SharedAgentDataHolder() {
@@ -139,5 +142,35 @@ public class SharedAgentDataHolder extends SharedDataHolder {
         if (lock.isHeldByCurrentThread()) {
             lock.unlock();
         }
+    }
+
+    public String getAgentId() {
+
+        return agentId;
+    }
+
+    public void setAgentId(String agentId) {
+
+        this.agentId = agentId;
+    }
+
+    public String getResponseVariable() {
+
+        return responseVariable;
+    }
+
+    public void setResponseVariable(String responseVariable) {
+
+        this.responseVariable = responseVariable;
+    }
+
+    public boolean isOverwriteBody() {
+
+        return overwriteBody;
+    }
+
+    public void setOverwriteBody(boolean overwriteBody) {
+
+        this.overwriteBody = overwriteBody;
     }
 }

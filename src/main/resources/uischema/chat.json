@@ -29,21 +29,6 @@
             }
           },
           {
-            "type": "attribute",
-            "value": {
-              "name": "memoryConfigKey",
-              "displayName": "Memory Connection",
-              "inputType": "connection",
-              "allowedConnectionTypes": [
-                "MEMORY_FILE"
-              ],
-              "defaultType": "connection.local",
-              "defaultValue": "",
-              "required": "true",
-              "helpTip": "Memory connection to be used"
-            }
-          },
-          {
             "type": "attributeGroup",
             "value": {
               "groupName": "Basic",
@@ -57,16 +42,6 @@
                     "defaultValue": "gpt-4o",
                     "required": "true",
                     "helpTip": "Name of the model to use"
-                  }
-                },
-                {
-                  "type": "attribute",
-                  "value": {
-                    "name": "userID",
-                    "displayName": "User ID",
-                    "inputType": "stringOrExpression",
-                    "required": "true",
-                    "helpTip": "Unique user identifier"
                   }
                 },
                 {
@@ -199,47 +174,6 @@
                     "defaultValue": "",
                     "required": "false",
                     "helpTip": "Seed"
-                  }
-                }
-              ]
-            }
-          },
-          {
-            "type": "attributeGroup",
-            "value": {
-              "groupName": "Additional",
-              "elements": [
-                {
-                  "type": "attribute",
-                  "value": {
-                    "name": "knowledge",
-                    "displayName": "Additional knowledge",
-                    "inputType": "stringOrExpression",
-                    "defaultValue": "",
-                    "required": "false",
-                    "helpTip": "Provide external knowledge to LLM"
-                  }
-                },
-                {
-                  "type": "attribute",
-                  "value": {
-                    "name": "history",
-                    "displayName": "Chat history",
-                    "inputType": "stringOrExpression",
-                    "defaultValue": "",
-                    "required": "false",
-                    "helpTip": "Provide chat history in OpenAI format"
-                  }
-                },
-                {
-                  "type": "attribute",
-                  "value": {
-                    "name": "maxHistory",
-                    "displayName": "Max chat history",
-                    "inputType": "stringOrExpression",
-                    "defaultValue": "10",
-                    "required": "false",
-                    "helpTip": "Maximum chat history to use"
                   }
                 }
               ]

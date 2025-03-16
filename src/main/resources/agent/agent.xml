@@ -16,6 +16,7 @@
    under the License.
 -->
 <template xmlns="http://ws.apache.org/ns/synapse" name="agent">
+    <parameter name="agentID" description="Agent ID"/>
     <parameter name="connections" description="Connections"/>
     <parameter name="userID" description="User ID"/>
     <parameter name="system" description="System prompt"/>
