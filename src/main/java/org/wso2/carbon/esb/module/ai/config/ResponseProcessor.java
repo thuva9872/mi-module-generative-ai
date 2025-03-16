@@ -12,13 +12,7 @@ import java.util.Map;
 public class ResponseProcessor extends AbstractAIMediator {
 
     @Override
-    public void execute(MessageContext messageContext) {
-
-        Object responseVariable = getParameter(
-                messageContext, Constants.RESPONSE_VARIABLE);
-        if (!(responseVariable instanceof String)) {
-            handleException("Invalid value for responseVariable", messageContext);
-        }
+    public void execute(MessageContext messageContext, String responseVariable, Boolean overwriteBody) {
 
         Object response = messageContext.getVariable(responseVariable.toString());
         if (response == null || !(response instanceof Map<?, ?>)) {
@@ -45,7 +39,7 @@ public class ResponseProcessor extends AbstractAIMediator {
                 attributes.put(entry.getKey(), entry.getValue());
             }
         }
-        handleConnectorResponse(messageContext, payload, headers, attributes);
+        handleConnectorResponse(messageContext, responseVariable, overwriteBody, payload, headers, attributes);
 
         // Restore the original payload so that the InvokeMediator can handle the response
         restoreOriginalPayload(messageContext);

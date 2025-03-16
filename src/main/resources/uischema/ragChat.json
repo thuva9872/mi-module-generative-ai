@@ -64,16 +64,6 @@
           {
             "type": "attribute",
             "value": {
-              "name": "userID",
-              "displayName": "User ID",
-              "inputType": "stringOrExpression",
-              "required": "true",
-              "helpTip": "Unique user identifier"
-            }
-          },
-          {
-            "type": "attribute",
-            "value": {
               "name": "prompt",
               "displayName": "User query/prompt",
               "inputType": "expressionTextArea",

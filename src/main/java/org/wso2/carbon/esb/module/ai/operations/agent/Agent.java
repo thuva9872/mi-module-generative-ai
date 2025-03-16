@@ -18,7 +18,6 @@
 
 package org.wso2.carbon.esb.module.ai.operations.agent;
 
-import com.google.gson.Gson;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.data.message.AiMessage;
@@ -54,6 +53,7 @@ import org.apache.synapse.SequenceType;
 import org.apache.synapse.SynapseConstants;
 import org.apache.synapse.SynapseLog;
 import org.apache.synapse.aspects.flow.statistics.collectors.RuntimeStatisticCollector;
+import org.apache.synapse.config.xml.ValueFactory;
 import org.apache.synapse.continuation.ContinuationStackManager;
 import org.apache.synapse.continuation.SeqContinuationState;
 import org.apache.synapse.core.axis2.Axis2MessageContext;
@@ -64,10 +64,12 @@ import org.apache.synapse.mediators.eip.EIPConstants;
 import org.apache.synapse.mediators.eip.EIPUtils;
 import org.apache.synapse.mediators.eip.SharedDataHolder;
 import org.apache.synapse.mediators.template.InvokeMediator;
+import org.apache.synapse.mediators.template.ResolvedInvokeParam;
 import org.apache.synapse.mediators.template.TemplateMediator;
 import org.apache.synapse.mediators.template.TemplateParam;
 import org.apache.synapse.util.InlineExpressionUtil;
 import org.apache.synapse.util.MessageHelper;
+import org.apache.synapse.util.xpath.SynapseExpression;
 import org.jaxen.JaxenException;
 import org.wso2.carbon.esb.module.ai.AbstractAIMediator;
 import org.wso2.carbon.esb.module.ai.Constants;
@@ -83,7 +85,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
 import java.util.Timer;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -111,36 +112,43 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
     protected Log log = LogFactory.getLog(this.getClass());
     private static final int MAX_TOOL_EXECUTIONS_PER_REQUEST = 100;
     private static final String DEFAULT_SYSTEM_PROMPT = "You are a helpful assistant.";
-    private String agentID; // Unique identifier for the agent
-    private static final Gson gson = new Gson();
     private final ServiceOutputParser serviceOutputParser = new ServiceOutputParser();
-    private final Map<String, ToolExecutionAggregate> activeAggregates = Collections.synchronizedMap(new HashMap<>());
-    private final Object lock = new Object();
-    private final List<ToolSpecification> toolSpecifications;
-    private boolean isInitialized = false;
-    private final Map<String, SequenceMediator> toolInvokers; // Map of tool name to sequence mediator
-    private final Map<String, Value> toolResultExpressions; // Map of tool name to result expressions
-    private Map<Object, ChatMemory> chatMemories;
-    private ChatMemoryProvider chatMemoryProvider;
 
-    // Chat configurations
-    private Integer maxChatHistory = 10;
-    private String modelName;
-    private Double temperature;
-    private Integer maxTokens;
-    private Double topP;
-    private Double frequencyPenalty;
-    private Integer seed;
-    private String system;
-    private String connectionName;
+    // Currently we are assigning a id for each agent in the operation configuration. This is used to create a map for
+    // each agent to store the tool execution related data. This is a temporary solution.
+    // This was done to reduce redundant processing of same configurations for each request.
+    // TODO: Replace this with a better approach if possible
+
+    // agentId -> (correlationId -> ToolExecutionAggregate)
+    private final Map<String, Map<String, ToolExecutionAggregate>> activeAggregates =
+            Collections.synchronizedMap(new HashMap<>());
+
+    // agentId -> lock
+    private final Map<String, Object> lockMap = Collections.synchronizedMap(new HashMap<>());
+
+    // agentId -> List of tool specifications
+    private final Map<String, List<ToolSpecification>> toolSpecifications = new HashMap<>();
+
+    // agentId -> isInitialized
+    private final Map<String, Boolean> isInitialized = new HashMap<>();
+
+    // agentId -> (toolName -> toolInvoker)
+    private final Map<String, Map<String, SequenceMediator>> toolInvokers = new HashMap<>();
+
+    // agentId -> (toolName -> resultExpression)
+    private final Map<String, Map<String, Value>> toolResultExpressions = new HashMap<>();
+
+    // agentId -> (memoryId -> ChatMemory)
+    private final Map<String, Map<Object, ChatMemory>> chatMemories = new HashMap<>();
+
+    // agentId -> ChatMemoryProvider
+    private final Map<String, ChatMemoryProvider> chatMemoryProvider = new HashMap<>();
+
     private long toolExecutionTimeout = 10000;
 
-    public Agent() {
+    public Object getLock(String agentId) {
 
-        agentID = String.valueOf(new Random().nextLong());
-        toolInvokers = new HashMap<>();
-        toolResultExpressions = new HashMap<>();
-        toolSpecifications = new ArrayList<>();
+        return lockMap.computeIfAbsent(agentId, key -> new Object());
     }
 
     public interface Assistant {
@@ -148,45 +156,85 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
         Result<String> chat(@MemoryId String memoryId, @dev.langchain4j.service.UserMessage String message);
     }
 
-    private void init(MessageContext mc) {
+    private void init(MessageContext mc, String agentID, int maxChatHistory) {
 
-        connectionName = getProperty(mc, Constants.CONNECTION_NAME, String.class, false);
-        modelName = getMediatorParameter(mc, Constants.MODEL_NAME, String.class, false);
-        setResponseVariable(getMediatorParameter(
-                mc, Constants.RESPONSE_VARIABLE, String.class, false));
-        setOverwriteBody(getMediatorParameter(mc, Constants.OVERWRITE_BODY, Boolean.class, false));
-
-        // Advanced configurations
-        system = getMediatorParameter(mc, Constants.SYSTEM, String.class, false);
-        temperature = getMediatorParameter(mc, Constants.TEMPERATURE, Double.class, true);
-        maxTokens = getMediatorParameter(mc, Constants.MAX_TOKENS, Integer.class, true);
-        topP = getMediatorParameter(mc, Constants.TOP_P, Double.class, true);
-        frequencyPenalty = getMediatorParameter(mc, Constants.FREQUENCY_PENALTY, Double.class, true);
-        seed = getMediatorParameter(mc, Constants.SEED, Integer.class, true);
-        maxChatHistory = getMediatorParameter(mc, Constants.MAX_HISTORY, Integer.class, true);
-        // TODO: Add toolExecutionTimeout to the ui schema
-        Long toolTimeOut = getMediatorParameter(mc, Constants.TOOL_EXECUTION_TIMEOUT, Long.class, true);
-        if (toolTimeOut != null) {
-            toolExecutionTimeout = toolTimeOut * 1000;
-        }
-
-        chatMemories = new ConcurrentHashMap<>();
-        chatMemoryProvider = memoryId -> MessageWindowChatMemory.builder().id(memoryId).maxMessages(maxChatHistory)
-                .chatMemoryStore(new InMemoryChatMemoryStore()).build();
+        chatMemories.put(agentID, new ConcurrentHashMap<>());
+        chatMemoryProvider.put(agentID,
+                memoryId -> MessageWindowChatMemory.builder().id(memoryId).maxMessages(maxChatHistory)
+                        .chatMemoryStore(new InMemoryChatMemoryStore()).build());
 
         // Generate tool specifications
-        generateToolSpecifications(mc, AgentUtils.getTools(getParameter(mc, Constants.TOOLS)));
+        toolSpecifications.put(agentID, new ArrayList<>());
+        toolInvokers.put(agentID, new HashMap<>());
+        toolResultExpressions.put(agentID, new HashMap<>());
+        generateToolSpecifications(agentID, mc, getTools(mc));
+    }
+
+    public List<Tool> getTools(MessageContext mc) {
+
+        Object toolsObject = getParameter(mc, Constants.TOOLS);
+        List<Tool> tools = new ArrayList<>();
+        if (toolsObject instanceof ResolvedInvokeParam toolsParams) {
+            List<ResolvedInvokeParam> toolList = toolsParams.getChildren();
+            for (ResolvedInvokeParam toolParam : toolList) {
+                Map<String, Object> toolAttributes = toolParam.getAttributes();
+                String name = (String) toolAttributes.get(Constants.NAME);
+                String template = (String) toolAttributes.get(Constants.TEMPLATE);
+                String resultExpression = (String) toolAttributes.get(Constants.RESULT_EXPRESSION);
+                if (StringUtils.isBlank(name) || StringUtils.isBlank(template) ||
+                        StringUtils.isBlank(resultExpression)) {
+                    handleConnectorException(Errors.INVALID_TOOL_CONFIGURATION, mc);
+                }
+                name = name.replaceAll("\\s", "_");
+                SynapseExpression resultSynapseExpression =
+                        new ValueFactory().createSynapseExpression(resultExpression);
+                Value resultExpressionValue = new Value(resultSynapseExpression);
+                String description = (String) toolAttributes.get(Constants.DESCRIPTION);
+                Tool tool = new Tool(name, template, resultExpressionValue, description);
+                tools.add(tool);
+            }
+        }
+        return tools;
     }
 
     @Override
     public boolean mediate(MessageContext mc) {
 
+        String agentID = getMediatorParameter(mc, Constants.AGENT_ID, String.class, false);
+        if (StringUtils.isEmpty(agentID)) {
+            handleConnectorException(Errors.AGENT_ID_NOT_PROVIDED, mc);
+        }
+        String connectionName = getProperty(mc, Constants.CONNECTION_NAME, String.class, false);
+        String modelName = getMediatorParameter(mc, Constants.MODEL_NAME, String.class, false);
+        String responseVariable = getMediatorParameter(
+                mc, Constants.RESPONSE_VARIABLE, String.class, false);
+        Boolean overWriteBody = getMediatorParameter(mc, Constants.OVERWRITE_BODY, Boolean.class, false);
+
+        // Advanced configurations
+        String system = getMediatorParameter(mc, Constants.SYSTEM, String.class, false);
+        Double temperature = getMediatorParameter(mc, Constants.TEMPERATURE, Double.class, true);
+        Integer maxTokens = getMediatorParameter(mc, Constants.MAX_TOKENS, Integer.class, true);
+        Double topP = getMediatorParameter(mc, Constants.TOP_P, Double.class, true);
+        Double frequencyPenalty = getMediatorParameter(mc, Constants.FREQUENCY_PENALTY, Double.class, true);
+        Integer seed = getMediatorParameter(mc, Constants.SEED, Integer.class, true);
+        Integer maxChatHistory = getMediatorParameter(mc, Constants.MAX_HISTORY, Integer.class, true);
+        if (maxChatHistory == null) {
+            maxChatHistory = 10;
+        }
+        // TODO: Add toolExecutionTimeout to the ui schema
+//        Long toolExecutionTimeout = getMediatorParameter(mc, Constants.TOOL_EXECUTION_TIMEOUT, Long.class, true);
+//        if (toolExecutionTimeout != null) {
+//            toolExecutionTimeout = toolExecutionTimeout * 1000;
+//        } else {
+//            toolExecutionTimeout = 10000L;
+//        }
+
         // Initialize the agent
-        if (!isInitialized) {
-            synchronized (lock) {
-                if (!isInitialized) {
-                    init(mc);
-                    isInitialized = true;
+        if (isInitialized.get(agentID) == null || !isInitialized.get(agentID)) {
+            synchronized (getLock(agentID)) {
+                if (isInitialized.get(agentID) == null || !isInitialized.get(agentID)) {
+                    init(mc, agentID, maxChatHistory);
+                    isInitialized.put(agentID, true);
                 }
             }
         }
@@ -207,7 +255,6 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
 
         try {
             SynapseLog synLog = getLog(mc);
-
             if (synLog.isTraceOrDebugEnabled()) {
                 synLog.traceOrDebug("Start : AI Agent mediator");
 
@@ -218,13 +265,13 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
 
             // Build the AI service context
             AiServiceContext aiServiceContext = new SynapseAIContext(Assistant.class);
-            ((SynapseAIContext) aiServiceContext).setToolResultVariable(toolResultExpressions);
+            ((SynapseAIContext) aiServiceContext).setToolResultVariable(toolResultExpressions.get(agentID));
             aiServiceContext.systemMessageProvider =
                     chatMemoryId -> system != null ? Optional.of(system) : Optional.of(DEFAULT_SYSTEM_PROMPT);
             aiServiceContext.chatModel = model;
-            aiServiceContext.chatMemories = chatMemories;
-            aiServiceContext.chatMemoryProvider = chatMemoryProvider;
-            aiServiceContext.toolSpecifications = toolSpecifications;
+            aiServiceContext.chatMemories = chatMemories.get(agentID);
+            aiServiceContext.chatMemoryProvider = chatMemoryProvider.get(agentID);
+            aiServiceContext.toolSpecifications = toolSpecifications.get(agentID);
 
             SystemMessage systemMessage = new SystemMessage(system);
             UserMessage userMessage = new UserMessage(parsedPrompt);
@@ -240,7 +287,9 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
             int executionsLeft = MAX_TOOL_EXECUTIONS_PER_REQUEST;
 
             SharedAgentDataHolder sharedAgentDataHolder = new SharedAgentDataHolder();
-
+            sharedAgentDataHolder.setAgentId(agentID);
+            sharedAgentDataHolder.setOverwriteBody(overWriteBody);
+            sharedAgentDataHolder.setResponseVariable(responseVariable);
             // Clone the original MessageContext and save it to continue the next iteration of agent inference
             MessageContext orginalMessageContext = MessageHelper.cloneMessageContext(mc);
             sharedAgentDataHolder.setSynCtx(orginalMessageContext);
@@ -250,7 +299,7 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
             sharedAgentDataHolder.setMemoryId(memoryId);
             mc.setProperty(Constants.AGENT_SHARED_DATA_HOLDER + "." + agentID, sharedAgentDataHolder);
 
-            return inferenceAgentAndExecuteTools(mc, synLog);
+            return inferenceAgentAndExecuteTools(mc, synLog, agentID);
         } catch (Exception e) {
             handleConnectorException(Errors.CHAT_COMPLETION_ERROR, mc, e);
         }
@@ -268,7 +317,7 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
         return prompt;
     }
 
-    private boolean inferenceAgentAndExecuteTools(MessageContext mc, SynapseLog synLog) {
+    private boolean inferenceAgentAndExecuteTools(MessageContext mc, SynapseLog synLog, String agentID) {
 
         boolean agentInferenceFinished = false;
         boolean toolExecutionResultAggregate = false;
@@ -290,7 +339,6 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
         }
 
         ChatResponse chatResponse = aiServiceContext.chatModel.chat(chatRequest);
-
         sharedAgentDataHolder.getLock();
         sharedAgentDataHolder.setTokenUsageAccumulator(
                 TokenUsage.sum(sharedAgentDataHolder.getTokenUsageAccumulator(), chatResponse.metadata().tokenUsage()));
@@ -329,12 +377,13 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
                     handleConnectorException(Errors.EXCEEDED_SEQUENTIAL_TOOL_EXECUTIONS, orginalMessageContext);
                 }
 
-                SequenceMediator toolMediator = toolInvokers.get(toolExecutionRequest.name());
+                SequenceMediator toolMediator = toolInvokers.get(agentID).get(toolExecutionRequest.name());
                 MessageContext clonedMessageContext =
-                        getClonedMessageContextForToolExecution(mc, i + 1, toolExecutionsSize);
+                        getClonedMessageContextForToolExecution(mc, agentID, i + 1, toolExecutionsSize);
 
                 // Store the current tool execution data in the cloned message context
                 ToolExecutionDataHolder toolExecutionDataHolder = new ToolExecutionDataHolder();
+                toolExecutionDataHolder.setAgentID(agentID);
                 toolExecutionDataHolder.setToolExecutionRequest(toolExecutionRequest);
                 toolExecutionDataHolder.setTotalToolExecutionCount(aiMessage.toolExecutionRequests().size());
                 toolExecutionDataHolder.setCurrentToolExecutionIndex(i++);
@@ -345,7 +394,7 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
                         toolExecutionDataHolder);
 
                 ContinuationStackManager.addReliantContinuationState(clonedMessageContext, 0, getMediatorPosition());
-                executeTool(toolExecutionRequest, toolMediator, clonedMessageContext, toolExecutionsSize);
+                executeTool(agentID, toolExecutionRequest, toolMediator, clonedMessageContext, toolExecutionsSize);
             }
         }
         OperationContext opCtx
@@ -370,6 +419,7 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
         boolean result = false;
         boolean readyToAggregate = false;
 
+        String agentID = messageContext.getProperty(Constants.AGENT_ID).toString();
         ToolExecutionDataHolder toolExecutionDataHolder = (ToolExecutionDataHolder) messageContext.getProperty(
                 Constants.TOOL_EXECUTION_DATA_HOLDER + "." + agentID);
         if (!continuationState.hasChild()) {
@@ -383,19 +433,21 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
             synLog.traceOrDebug(
                     "Continuation is triggered from a callback, mediating through the child continuation state");
             ToolExecutionRequest toolExecutionRequest = toolExecutionDataHolder.getToolExecutionRequest();
-            SequenceMediator toolMediator = toolInvokers.get(toolExecutionRequest.name());
+            SequenceMediator toolMediator =
+                    toolInvokers.get(toolExecutionDataHolder.getAgentID()).get(toolExecutionRequest.name());
             FlowContinuableMediator mediator = (FlowContinuableMediator) toolMediator.getChild(0);
             result = mediator.mediate(messageContext, continuationState.getChildContState());
         }
 
         if (readyToAggregate) {
-            return aggregateToolExecutionResult(messageContext, toolExecutionDataHolder.getTotalToolExecutionCount(),
-                    synLog);
+            return aggregateToolExecutionResult(toolExecutionDataHolder.getAgentID(), messageContext,
+                    toolExecutionDataHolder.getTotalToolExecutionCount(), synLog);
         }
         return result;
     }
 
-    private boolean aggregateToolExecutionResult(MessageContext synCtx, int toolCount, SynapseLog synLog) {
+    private boolean aggregateToolExecutionResult(String agentID, MessageContext synCtx, int toolCount,
+                                                 SynapseLog synLog) {
 
         ContinuationStackManager.removeReliantContinuationState(synCtx);
         ToolExecutionAggregate aggregate = null;
@@ -409,9 +461,9 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
 
         //No need to build the message as we are going to aggregate the variables
         while (aggregate == null) {
-            synchronized (lock) {
-                if (activeAggregates.containsKey(correlation)) {
-                    aggregate = activeAggregates.get(correlation);
+            synchronized (getLock(agentID)) {
+                if (activeAggregates.containsKey(agentID) && activeAggregates.get(agentID).containsKey(correlation)) {
+                    aggregate = activeAggregates.get(agentID).get(correlation);
                     if (aggregate != null) {
                         if (!aggregate.getLock()) {
                             aggregate = null;
@@ -423,7 +475,7 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
                                 (toolExecutionTimeout > 0 ? "expires in : "
                                         + (toolExecutionTimeout / 1000) + "secs" : "without expiry time"));
                     }
-                    if (isAggregationCompleted(synCtx)) {
+                    if (isAggregationCompleted(agentID, synCtx)) {
                         return false;
                     }
 
@@ -432,7 +484,7 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
                             correlation,
                             toolExecutionTimeout,
                             toolCount, this, synCtx.getFaultStack().peek());
-
+                    aggregate.setAgentID(agentID);
                     if (toolExecutionTimeout > 0) {
                         synchronized (aggregate) {
                             if (!aggregate.isCompleted()) {
@@ -451,7 +503,9 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
                         }
                     }
                     aggregate.getLock();
-                    activeAggregates.put(correlation, aggregate);
+                    Map<String, ToolExecutionAggregate> agentAggregates = new HashMap<>();
+                    agentAggregates.put(correlation, aggregate);
+                    activeAggregates.put(agentID, agentAggregates);
                 }
             }
         }
@@ -497,7 +551,7 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
                 MessageContext lastMessage = aggregate.getLastMessage();
                 if (lastMessage != null) {
                     Object aggregateTimeoutHolderObj =
-                            lastMessage.getProperty(Constants.AGENT_SHARED_DATA_HOLDER + "." + agentID);
+                            lastMessage.getProperty(Constants.AGENT_SHARED_DATA_HOLDER + "." + aggregate.getAgentID());
 
                     if (aggregateTimeoutHolderObj != null) {
                         SharedDataHolder sharedDataHolder = (SharedDataHolder) aggregateTimeoutHolderObj;
@@ -516,12 +570,13 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
         MessageContext originalMessageContext = getOriginalMessageContext(aggregate);
         if (originalMessageContext != null) {
             // Clone the message context to preserve the original message context for the next iteration
-            MessageContext clonedMessageContext = getClonedMessageContext(originalMessageContext);
+            MessageContext clonedMessageContext =
+                    getClonedMessageContext(originalMessageContext, aggregate.getAgentID());
             if (clonedMessageContext != null) {
                 collectToolExecutionResults(clonedMessageContext, aggregate);
                 aggregate.clear();
-                activeAggregates.remove(aggregate.getCorrelation());
-                return continueAgentInference(clonedMessageContext);
+                activeAggregates.get(aggregate.getAgentID()).remove(aggregate.getCorrelation());
+                return continueAgentInference(aggregate.getAgentID(), clonedMessageContext);
             } else {
                 handleException(aggregate, "Error cloning the original message context", null,
                         originalMessageContext);
@@ -534,13 +589,14 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
         }
     }
 
-    private boolean continueAgentInference(MessageContext originalMessageContext) {
+    private boolean continueAgentInference(String agentID, MessageContext originalMessageContext) {
 
         SharedAgentDataHolder sharedAgentDataHolder = (SharedAgentDataHolder) originalMessageContext.getProperty(
                 Constants.AGENT_SHARED_DATA_HOLDER + "." + agentID);
         if (sharedAgentDataHolder != null) {
             sharedAgentDataHolder.resetAggregationCompletion();
-            return inferenceAgentAndExecuteTools(originalMessageContext, getLog(originalMessageContext));
+            return inferenceAgentAndExecuteTools(originalMessageContext, getLog(originalMessageContext),
+                    sharedAgentDataHolder.getAgentId());
         }
         return false;
     }
@@ -552,13 +608,13 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
             log.warn("The agent tool executions are not finished for the correlation : "
                     + aggregate.getCorrelation());
         }
-        SharedAgentDataHolder sharedAgentDataHolder = extractToolExecutionResult(aggregate);
-        originalMessageContext.setProperty(Constants.AGENT_SHARED_DATA_HOLDER + "." + agentID,
+        SharedAgentDataHolder sharedAgentDataHolder = extractToolExecutionResult(aggregate.getAgentID(), aggregate);
+        originalMessageContext.setProperty(Constants.AGENT_SHARED_DATA_HOLDER + "." + aggregate.getAgentID(),
                 sharedAgentDataHolder);
     }
 
-    private SharedAgentDataHolder extractToolExecutionResult(ToolExecutionAggregate aggregate) {
-        //TODO: Check NPE
+    private SharedAgentDataHolder extractToolExecutionResult(String agentID, ToolExecutionAggregate aggregate) {
+
         SharedAgentDataHolder sharedAgentDataHolder;
         if (aggregate.getLastMessage() != null) {
             sharedAgentDataHolder = (SharedAgentDataHolder) aggregate.getLastMessage().getProperty(
@@ -612,7 +668,8 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
         Result<Object> parsedResponse =
                 parseFinalResponse(originalMessageContext, finishChatResponse, sharedAgentDataHolder);
         if (parsedResponse != null) {
-            handleConnectorResponse(originalMessageContext, parsedResponse, null, null);
+            handleConnectorResponse(originalMessageContext, sharedAgentDataHolder.getResponseVariable(),
+                    sharedAgentDataHolder.isOverwriteBody(), parsedResponse, null, null);
         } else {
             handleConnectorException(Errors.INVALID_OUTPUT_TYPE, originalMessageContext);
         }
@@ -644,7 +701,7 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
                                  MessageContext msgContext) {
 
         aggregate.clear();
-        activeAggregates.remove(aggregate.getCorrelation());
+        activeAggregates.get(aggregate.getAgentID()).remove(aggregate.getCorrelation());
         if (exception != null) {
             super.handleException(msg, exception, msgContext);
         } else {
@@ -656,7 +713,8 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
 
         MessageContext lastMessage = aggregate.getLastMessage();
         if (lastMessage != null) {
-            Object aggregateHolderObj = lastMessage.getProperty(Constants.AGENT_SHARED_DATA_HOLDER + "." + agentID);
+            Object aggregateHolderObj =
+                    lastMessage.getProperty(Constants.AGENT_SHARED_DATA_HOLDER + "." + aggregate.getAgentID());
             return getOriginalMessageContext((SharedAgentDataHolder) aggregateHolderObj);
         } else if (aggregate.getSharedAgentDataHolder() != null) {
             return getOriginalMessageContext(aggregate.getSharedAgentDataHolder());
@@ -672,7 +730,7 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
         return null;
     }
 
-    private boolean isAggregationCompleted(MessageContext synCtx) {
+    private boolean isAggregationCompleted(String agentID, MessageContext synCtx) {
 
         Object aggregateTimeoutHolderObj = synCtx.getProperty(Constants.AGENT_SHARED_DATA_HOLDER + "." + agentID);
 
@@ -686,23 +744,24 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
         return false;
     }
 
-    private MessageContext getClonedMessageContextForToolExecution(MessageContext mc, int toolId,
+    private MessageContext getClonedMessageContextForToolExecution(MessageContext mc, String agentID, int toolId,
                                                                    int totalToolExecutions) {
 
-        MessageContext newCtx = getClonedMessageContext(mc);
+        MessageContext newCtx = getClonedMessageContext(mc, agentID);
 
         // Set isServerSide property in the cloned message context
         ((Axis2MessageContext) newCtx).getAxis2MessageContext().setServerSide(
                 ((Axis2MessageContext) mc).getAxis2MessageContext().isServerSide());
 
         // Set the continue mediation property in the cloned message context to continue from MediatorWorker
+        newCtx.setProperty(Constants.AGENT_ID, agentID);
         newCtx.setProperty(SynapseConstants.SCATTER_MESSAGES, true);
         newCtx.setProperty(Constants.AGENT_TOOL_EXECUTION + "." + agentID,
                 toolId + EIPConstants.MESSAGE_SEQUENCE_DELEMITER + totalToolExecutions);
         return newCtx;
     }
 
-    private MessageContext getClonedMessageContext(MessageContext mc) {
+    private MessageContext getClonedMessageContext(MessageContext mc, String agentID) {
 
         MessageContext newCtx = null;
         try {
@@ -714,7 +773,7 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
         return newCtx;
     }
 
-    private void generateToolSpecifications(MessageContext mc, List<Tool> tools) {
+    private void generateToolSpecifications(String agentID, MessageContext mc, List<Tool> tools) {
 
         if (tools == null) {
             return;
@@ -725,15 +784,16 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
                 Mediator mediator = mc.getSequenceTemplate(toolTemplate);
                 if (mediator instanceof TemplateMediator) {
                     TemplateMediator templateMediator = (TemplateMediator) mediator;
-                    String name = tool.getName();
+                    String template = tool.getTemplate();
                     String description = templateMediator.getDescription();
                     List<TemplateParam> templateParams = new ArrayList<>(templateMediator.getParameters());
                     JsonObjectSchema parameterSchema = AgentUtils.generateParameterSchema(templateParams);
                     ToolSpecification toolSpecification =
-                            ToolSpecification.builder().name(name).description(description).parameters(parameterSchema)
+                            ToolSpecification.builder().name(template).description(description)
+                                    .parameters(parameterSchema)
                                     .build();
-                    toolResultExpressions.put(tool.getName(), tool.getResultExpression());
-                    toolSpecifications.add(toolSpecification);
+                    toolResultExpressions.get(agentID).put(template, tool.getResultExpression());
+                    toolSpecifications.get(agentID).add(toolSpecification);
 
                     // Add invoker for tool
                     SequenceMediator toolInvoker = new SequenceMediator();
@@ -742,13 +802,13 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
                     invoker.setTargetTemplate(toolTemplate);
 
                     toolInvoker.addChild(invoker);
-                    toolInvokers.put(name, toolInvoker);
+                    toolInvokers.get(agentID).put(template, toolInvoker);
                 }
             }
         }
     }
 
-    private boolean executeTool(ToolExecutionRequest toolExecutionRequest, SequenceMediator invoker,
+    private boolean executeTool(String agentID, ToolExecutionRequest toolExecutionRequest, SequenceMediator invoker,
                                 MessageContext mc, int toolCount) {
 
         Map<String, Object> arguments = AgentUtils.argumentsAsMap(toolExecutionRequest.arguments());
@@ -761,17 +821,19 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
         if (log.isDebugEnabled()) {
             log.debug("Asynchronously mediating using the tool invoker anonymous sequence");
         }
-        startToolExecutionTimeout(mc, toolCount);
+
+        String correlationIdName = Constants.TOOL_EXECUTION_CORRELATION + "." + agentID;
+        Object correlationID = mc.getProperty(correlationIdName);
+        String correlation = (String) correlationID;
+        if (!activeAggregates.containsKey(agentID) || !activeAggregates.get(agentID).containsKey(correlation)) {
+            startToolExecutionTimeout(agentID, mc, correlation, toolCount);
+        }
         mc.getEnvironment().injectAsync(mc, invoker);
 
         return false; //Async invocation
     }
 
-    private void startToolExecutionTimeout(MessageContext mc, int toolCount) {
-
-        String correlationIdName = Constants.TOOL_EXECUTION_CORRELATION + "." + agentID;
-        Object correlationID = mc.getProperty(correlationIdName);
-        String correlation = (String) correlationID;
+    private void startToolExecutionTimeout(String agentID, MessageContext mc, String correlation, int toolCount) {
 
         SharedAgentDataHolder sharedAgentDataHolder = (SharedAgentDataHolder) mc.getProperty(
                 Constants.AGENT_SHARED_DATA_HOLDER + "." + agentID);
@@ -780,7 +842,7 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
                 correlation,
                 toolExecutionTimeout,
                 toolCount, this, mc.getFaultStack().peek(), sharedAgentDataHolder);
-
+        aggregate.setAgentID(agentID);
         try {
             log.info("Scheduling Synapse timer for agent tool execution with correlation : " +
                     correlation);
@@ -792,7 +854,13 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
             mc.getConfiguration().getSynapseTimer().
                     schedule(aggregate, toolExecutionTimeout);
         }
-        activeAggregates.put(correlation, aggregate);
+        if (activeAggregates.containsKey(agentID)) {
+            activeAggregates.get(agentID).put(correlation, aggregate);
+        } else {
+            Map<String, ToolExecutionAggregate> aggregateMap = new HashMap<>();
+            aggregateMap.put(correlation, aggregate);
+            activeAggregates.put(agentID, aggregateMap);
+        }
     }
 
     private Result<Object> parseFinalResponse(MessageContext mc, ChatResponse chatResponse,
@@ -814,13 +882,8 @@ public class Agent extends AbstractAIMediator implements FlowContinuableMediator
         return parsedResult;
     }
 
-    public String getAgentID() {
-
-        return agentID;
-    }
-
     @Override
-    public void execute(MessageContext messageContext) {
+    public void execute(MessageContext messageContext, String responseVariable, Boolean overwriteBody) {
         // This method is not needed as we override the mediate method
     }
 }

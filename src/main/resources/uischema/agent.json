@@ -35,7 +35,7 @@
               "displayName": "Memory Connection",
               "inputType": "connection",
               "allowedConnectionTypes": [
-                "MEMORY_FILE"
+                "IN_MEMORY_STORE"
               ],
               "defaultType": "connection.local",
               "defaultValue": "",

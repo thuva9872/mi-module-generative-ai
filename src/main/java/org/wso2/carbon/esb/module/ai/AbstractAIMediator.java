@@ -136,8 +136,9 @@ public abstract class AbstractAIMediator extends AbstractConnector {
             output = JsonParser.parseString(jsonString).getAsJsonObject();
         }
 
-        if (overwriteBody != null && overwriteBody) {
-            org.apache.axis2.context.MessageContext axisMsgCtx = ((Axis2MessageContext) messageContext).getAxis2MessageContext();
+        if (overwriteBody) {
+            org.apache.axis2.context.MessageContext axisMsgCtx =
+                    ((Axis2MessageContext) messageContext).getAxis2MessageContext();
             try {
                 JsonUtil.getNewJsonPayload(axisMsgCtx, jsonString, true, true);
             } catch (AxisFault e) {
@@ -145,32 +146,12 @@ public abstract class AbstractAIMediator extends AbstractConnector {
             }
             axisMsgCtx.setProperty(org.apache.axis2.Constants.Configuration.MESSAGE_TYPE, Constants.JSON_CONTENT_TYPE);
             axisMsgCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE, Constants.JSON_CONTENT_TYPE);
-        }else {
+        } else {
             response.setPayload(output);
         }
         response.setHeaders(headers);
         response.setAttributes(attributes);
         messageContext.setVariable(responseVariable, response);
-    }
-
-    public void setResponseVariable(String responseVariable) {
-
-        this.responseVariable = responseVariable;
-    }
-
-    public void setOverwriteBody(Boolean overwriteBody) {
-
-        this.overwriteBody = overwriteBody;
-    }
-
-    public String getResponseVariable() {
-
-        return responseVariable;
-    }
-
-    public Boolean getOverwriteBody() {
-
-        return overwriteBody;
     }
 
     public void handleConnectorException(Errors code, MessageContext mc, Throwable e) {

@@ -28,27 +28,6 @@ public class AgentUtils {
     }.getType();
     private static final Pattern TRAILING_COMMA_PATTERN = Pattern.compile(",(\\s*[}\\]])");
 
-    public static List<Tool> getTools(Object toolsObject) {
-
-        List<Tool> tools = new ArrayList<>();
-        if (toolsObject instanceof ResolvedInvokeParam toolsParams) {
-            List<ResolvedInvokeParam> toolList = toolsParams.getChildren();
-            for (ResolvedInvokeParam toolParam : toolList) {
-                Map<String, Object> toolAttributes = toolParam.getAttributes();
-                String name = (String) toolAttributes.get(Constants.NAME);
-                String template = (String) toolAttributes.get(Constants.TEMPLATE);
-                String resultExpression = (String) toolAttributes.get(Constants.RESULT_EXPRESSION);
-                SynapseExpression resultSynapseExpression =
-                        new ValueFactory().createSynapseExpression(resultExpression);
-                Value resultExpressionValue = new Value(resultSynapseExpression);
-                String description = (String) toolAttributes.get(Constants.DESCRIPTION);
-                Tool tool = new Tool(name, template, resultExpressionValue, description);
-                tools.add(tool);
-            }
-        }
-        return tools;
-    }
-
     public static JsonObjectSchema generateParameterSchema(List<TemplateParam> templateParams) {
 
         JsonObjectSchema.Builder builder = JsonObjectSchema.builder();

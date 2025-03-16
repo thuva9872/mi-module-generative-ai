@@ -63,14 +63,16 @@ public class EmbeddingIngestor extends AbstractAIMediator {
                 return;
             }
             vectorStore.add(textEmbeddings);
+            handleConnectorResponse(mc, responseVariable, overwriteBody, Map.of("success", true),
+                    null, Map.of("SUCCESS", "true"));
+            return;
         } catch (VectorStoreException e) {
             handleConnectorException(e.getError(), mc, e);
         } catch (Exception e) {
             handleConnectorException(Errors.EMBEDDING_INJECTION_ERROR, mc, e);
-        } finally {
-            handleConnectorResponse(mc, responseVariable, overwriteBody,
-                    null, null, Map.of("SUCCESS", "true"));
         }
+        handleConnectorResponse(mc, responseVariable, overwriteBody, Map.of("success", false), null,
+                Map.of("SUCCESS", "false"));
     }
 
     private List<TextEmbedding> parseAndValidateInput(String input) {

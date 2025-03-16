@@ -9,6 +9,7 @@ import java.util.List;
 
 public class ToolExecutionDataHolder {
 
+    private String agentID;
     private List<ToolExecutionRequest> toolExecutionRequests; // This is stored for reference.
     private ToolExecutionRequest toolExecutionRequest; // This is the current tool execution request.
     private TokenUsage tokenUsageAccumulator;
@@ -85,5 +86,15 @@ public class ToolExecutionDataHolder {
     public void setToolExecutionRequests(List<ToolExecutionRequest> toolExecutionRequests) {
 
         this.toolExecutionRequests = toolExecutionRequests;
+    }
+
+    public String getAgentID() {
+
+        return agentID;
+    }
+
+    public void setAgentID(String agentID) {
+
+        this.agentID = agentID;
     }
 }
