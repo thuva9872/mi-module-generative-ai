@@ -31,7 +31,7 @@ import org.wso2.carbon.esb.module.ai.Errors;
 import org.wso2.carbon.esb.module.ai.exceptions.VectorStoreException;
 import org.wso2.carbon.esb.module.ai.utils.StringFilterParser;
 import org.wso2.carbon.esb.module.ai.stores.VectorStore;
-import org.wso2.carbon.esb.module.ai.stores.VectorStoreConnectionHandler;
+import org.wso2.carbon.esb.module.ai.connections.VectorStoreConnectionHandler;
 import org.wso2.carbon.esb.module.ai.utils.Utils;
 
 import java.util.List;

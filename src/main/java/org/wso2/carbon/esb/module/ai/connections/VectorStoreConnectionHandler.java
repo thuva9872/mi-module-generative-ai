@@ -16,31 +16,23 @@
  * under the License.
  */
 
-package org.wso2.carbon.esb.module.ai.stores;
+package org.wso2.carbon.esb.module.ai.connections;
 
 import org.apache.synapse.MessageContext;
 import org.wso2.carbon.esb.module.ai.Constants;
 import org.wso2.carbon.esb.module.ai.Errors;
-import org.wso2.carbon.esb.module.ai.connections.ConnectionParams;
 import org.wso2.carbon.esb.module.ai.exceptions.VectorStoreException;
+import org.wso2.carbon.esb.module.ai.stores.*;
 import org.wso2.micro.integrator.registry.MicroIntegratorRegistry;
-import java.util.concurrent.ConcurrentHashMap;
+
+import java.util.HashMap;
 
 public class VectorStoreConnectionHandler {
-
-    private final static ConcurrentHashMap<String, ConnectionParams> connections = new ConcurrentHashMap<>();
-
-    public static void addConnection(String connectionName, ConnectionParams connectionParams) {
-        connections.computeIfAbsent(connectionName, k -> connectionParams);
-    }
 
     public static VectorStore getVectorStore(String connectionName, MessageContext mc) throws VectorStoreException {
 
         VectorStore vectorStore = null;
-        ConnectionParams connectionParams = connections.get(connectionName);
-        if (connectionParams == null) {
-            return null;
-        }
+        ConnectionParams connectionParams = getConnectionParams(mc);
 
         switch (connectionParams.getConnectionType()) {
             case Constants.MI_VECTOR_STORE:
@@ -99,5 +91,38 @@ public class VectorStoreConnectionHandler {
                 break;
         }
         return vectorStore;
+    }
+
+    public static String getProperty(MessageContext messageContext, String key) {
+        return messageContext.getProperty(key) != null ? messageContext.getProperty(key).toString() : null;
+    }
+
+    public static ConnectionParams getConnectionParams(MessageContext messageContext) {
+        String connectionType = getProperty(messageContext, Constants.CONNECTION_TYPE);
+        String connectionName = getProperty(messageContext, Constants.CONNECTION_NAME);
+
+        HashMap<String, String> connectionProperties = new HashMap<>();
+        connectionProperties.put(Constants.PERSISTENCE, getProperty(messageContext, Constants.PERSISTENCE));
+        connectionProperties.put(Constants.URL, getProperty(messageContext, Constants.URL));
+        connectionProperties.put(Constants.COLLECTION, getProperty(messageContext, Constants.COLLECTION));
+
+        connectionProperties.put(Constants.API_KEY, getProperty(messageContext, Constants.API_KEY));
+        connectionProperties.put(Constants.CLOUD, getProperty(messageContext, Constants.CLOUD));
+        connectionProperties.put(Constants.REGION, getProperty(messageContext, Constants.REGION));
+        connectionProperties.put(Constants.INDEX, getProperty(messageContext, Constants.INDEX));
+        connectionProperties.put(Constants.NAMESPACE, getProperty(messageContext, Constants.NAMESPACE));
+        connectionProperties.put(Constants.DIMENSION, getProperty(messageContext, Constants.DIMENSION));
+
+        connectionProperties.put(Constants.HOST, getProperty(messageContext, Constants.HOST));
+        connectionProperties.put(Constants.PORT, getProperty(messageContext, Constants.PORT));
+        connectionProperties.put(Constants.DATABASE, getProperty(messageContext, Constants.DATABASE));
+        connectionProperties.put(Constants.USER, getProperty(messageContext, Constants.USER));
+        connectionProperties.put(Constants.PASSWORD, getProperty(messageContext, Constants.PASSWORD));
+        connectionProperties.put(Constants.TABLE, getProperty(messageContext, Constants.TABLE));
+
+        // Clear the apiKey property for security reasons
+        messageContext.setProperty(Constants.API_KEY, null);
+
+        return new ConnectionParams(connectionName, connectionType, connectionProperties);
     }
 }

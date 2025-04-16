@@ -29,7 +29,7 @@ import org.apache.synapse.MessageContext;
 import org.wso2.carbon.esb.module.ai.AbstractAIMediator;
 import org.wso2.carbon.esb.module.ai.Constants;
 import org.wso2.carbon.esb.module.ai.Errors;
-import org.wso2.carbon.esb.module.ai.llm.LLMConnectionHandler;
+import org.wso2.carbon.esb.module.ai.connections.LLMConnectionHandler;
 import org.wso2.carbon.esb.module.ai.models.TextEmbedding;
 import org.wso2.carbon.esb.module.ai.utils.Utils;
 
@@ -54,7 +54,6 @@ public class EmbeddingGenerator extends AbstractAIMediator {
 
         String input = getMediatorParameter(mc, Constants.INPUT, String.class, false);
         String model = getMediatorParameter(mc, Constants.MODEL, String.class, false);
-        String connectionName = getProperty(mc, Constants.CONNECTION_NAME, String.class, false);
 
         List<TextSegment> inputs = parseAndValidateInput(input);
         if (inputs == null) {
@@ -64,7 +63,7 @@ public class EmbeddingGenerator extends AbstractAIMediator {
 
         List<TextEmbedding> textEmbeddings = new ArrayList<>();
         try {
-            EmbeddingModel embeddingModel = LLMConnectionHandler.getEmbeddingModel(connectionName, model);
+            EmbeddingModel embeddingModel = LLMConnectionHandler.getEmbeddingModel(mc, model);
             if (embeddingModel == null) {
                 handleConnectorException(Errors.EMBEDDING_MODEL_CONNECTION_ERROR, mc);
                 return;

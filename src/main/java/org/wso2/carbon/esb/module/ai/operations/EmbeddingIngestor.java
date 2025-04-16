@@ -26,7 +26,7 @@ import org.wso2.carbon.esb.module.ai.Constants;
 import org.wso2.carbon.esb.module.ai.Errors;
 import org.wso2.carbon.esb.module.ai.exceptions.VectorStoreException;
 import org.wso2.carbon.esb.module.ai.stores.VectorStore;
-import org.wso2.carbon.esb.module.ai.stores.VectorStoreConnectionHandler;
+import org.wso2.carbon.esb.module.ai.connections.VectorStoreConnectionHandler;
 import org.wso2.carbon.esb.module.ai.models.TextEmbedding;
 import org.wso2.carbon.esb.module.ai.utils.Utils;
 

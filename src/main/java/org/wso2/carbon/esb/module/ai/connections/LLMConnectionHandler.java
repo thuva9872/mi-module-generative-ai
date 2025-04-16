@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.wso2.carbon.esb.module.ai.llm;
+package org.wso2.carbon.esb.module.ai.connections;
 
 import dev.langchain4j.model.anthropic.AnthropicChatModel;
 import dev.langchain4j.model.azure.AzureOpenAiChatModel;
@@ -25,30 +25,21 @@ import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.mistralai.MistralAiChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiEmbeddingModel;
+import org.apache.synapse.MessageContext;
 import org.wso2.carbon.esb.module.ai.Constants;
-import org.wso2.carbon.esb.module.ai.connections.ConnectionParams;
 
+import java.util.HashMap;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class LLMConnectionHandler {
 
-    private final static ConcurrentHashMap<String, ConnectionParams> connectionMap = new ConcurrentHashMap<>();
-
-    public static void addConnection(String connectionName, ConnectionParams connectionParams) {
-        connectionMap.computeIfAbsent(connectionName, k -> connectionParams);
-    }
-
-    public static ChatLanguageModel getChatModel(
-            String connectionName, String modelName, Double temperature, Integer maxTokens,
-            Double topP, Double frequencyPenalty, Integer seed) {
+    public static ChatLanguageModel getChatModel(MessageContext messageContext,
+                                                 String modelName, Double temperature, Integer maxTokens,
+                                                 Double topP, Double frequencyPenalty, Integer seed) {
 
         // TODO: Need to pool the models as it is resource intensive to create a new model for each request
         ChatLanguageModel chatModel = null;
-        ConnectionParams connectionParams = connectionMap.get(connectionName);
-        if (connectionParams == null) {
-            return null;
-        }
+        ConnectionParams connectionParams = getConnectionParams(messageContext);
 
         switch (Objects.requireNonNull(connectionParams).getConnectionType()) {
             case Constants.OPEN_AI:
@@ -102,9 +93,10 @@ public class LLMConnectionHandler {
         return chatModel;
     }
 
-    public static EmbeddingModel getEmbeddingModel(String connectionName, String modelName) {
+    public static EmbeddingModel getEmbeddingModel(MessageContext messageContext, String modelName) {
         EmbeddingModel embeddingModel = null;
-        ConnectionParams connectionParams = connectionMap.get(connectionName);
+        ConnectionParams connectionParams = getConnectionParams(messageContext);
+
         switch (Objects.requireNonNull(connectionParams).getConnectionType()) {
             case "OPEN_AI":
                 // Null values of LLM params will be handled by LangChain4j
@@ -116,5 +108,25 @@ public class LLMConnectionHandler {
                 break;
         }
         return embeddingModel;
+    }
+
+    public static String getProperty(MessageContext messageContext, String key) {
+        return messageContext.getProperty(key) != null ? messageContext.getProperty(key).toString() : null;
+    }
+
+    public static ConnectionParams getConnectionParams(MessageContext messageContext) {
+        String connectionType = getProperty(messageContext, Constants.CONNECTION_TYPE);
+        String connectionName = getProperty(messageContext, Constants.CONNECTION_NAME);
+
+        HashMap<String, String> connectionProperties = new HashMap<>();
+        connectionProperties.put(Constants.API_KEY, getProperty(messageContext, Constants.API_KEY));
+        connectionProperties.put(Constants.DEPLOYMENT_NAME, getProperty(messageContext, Constants.DEPLOYMENT_NAME));
+        connectionProperties.put(Constants.ENDPOINT, getProperty(messageContext, Constants.ENDPOINT));
+        connectionProperties.put(Constants.BASE_URL, getProperty(messageContext, Constants.BASE_URL));
+
+        // Clear the apiKey property for security reasons
+        messageContext.setProperty(Constants.API_KEY, null);
+
+        return new ConnectionParams(connectionName, connectionType, connectionProperties);
     }
 }
